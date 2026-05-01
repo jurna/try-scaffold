@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "WebSearch",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\PC\\\\Projects\\\\try-scaffold\\\\.claude\\\\skills\\\\dr-jskill\" -Recurse)",
+      "Bash(Select-Object FullName, Length)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\PC\\\\Projects\\\\try-scaffold\\\\.claude\\\\skills\\\\dr-jskill\\\\\" -Recurse -Force | Select-Object FullName | Format-Table -AutoSize)"
+    ]
+  }
+}

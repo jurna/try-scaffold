@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "dr-jskill": {
+      "source": "jdubois/dr-jskill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "6ac024e8ad36f3ff7195286734a54a372c8d5be0664337b9f8c0adc5ee238302"
+    }
+  }
+}
