@@ -10,7 +10,7 @@ function usage() {
   console.log(`Usage: node create-basic-project.mjs [PROJECT_NAME] [GROUP_ID] [ARTIFACT_ID] [PACKAGE_NAME] [JAVA_VERSION]
 Options:
   --boot-version <version>   Override Spring Boot version
-  --deps <dep1,dep2,...>     Comma-separated Spring Initializr dependency IDs (default: web,actuator,devtools,native)
+  --deps <dep1,dep2,...>     Comma-separated Spring Initializr dependency IDs
   -h|--help                  Show this help`);
 }
 
@@ -27,7 +27,7 @@ const artifactId = positional[2] || projectName;
 const packageName = positional[3] || `${groupId}.app`;
 const javaVersion = positional[4] || getJavaVersion();
 const bootVersion = flags.bootVersion || await resolveBootVersion();
-const dependencies = flags.deps || 'web,actuator,devtools,native';
+const dependencies = flags.deps || '';
 
 console.log(`Creating basic Spring Boot project with Boot=${bootVersion}, Java=${javaVersion}`);
 
@@ -45,6 +45,7 @@ try {
     packaging: 'jar',
     javaVersion,
     dependencies,
+    configurationFileFormat: 'yaml',
   });
   applyDotfiles(projectName, { database: false, frontend: false, packageName });
 } catch (err) {

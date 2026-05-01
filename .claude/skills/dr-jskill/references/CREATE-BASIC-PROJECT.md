@@ -40,7 +40,7 @@ All arguments are optional — defaults are applied for any omitted value.
 | Flag | Description |
 |------|-------------|
 | `--boot-version <x.y.z>` | Pin a specific Spring Boot version (default: latest stable 4.x) |
-| `--deps <dep1,dep2,...>` | Comma-separated Spring Initializr dependency IDs (default: `web,actuator,devtools,native`) |
+| `--deps <dep1,dep2,...>` | Comma-separated Spring Initializr dependency IDs |
 | `-h`, `--help` | Print usage and exit |
 
 ---
@@ -58,7 +58,7 @@ Open `https://start.spring.io/metadata/client` to browse all available dependenc
 | Build tool | Gradle |
 | Language | Java |
 | Packaging | JAR |
-| Dependencies | `web`, `actuator`, `devtools`, `native` (override with `--deps`) |
+| Dependencies | Specified via `--deps` |
 
 The project is extracted into `./<PROJECT_NAME>/`.
 
