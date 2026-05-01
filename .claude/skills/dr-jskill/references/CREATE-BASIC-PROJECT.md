@@ -47,7 +47,7 @@ All arguments are optional — defaults are applied for any omitted value.
 
 ## Dependency reference
 
-Open `https://start.spring.io/metadata/client` to browse all available dependency IDs and names. Each entry in `dependencies.values[].values[]` has an `id` (use with `--deps`) and a `name`.
+Fetch Web URL `https://start.spring.io/metadata/client` to browse all available dependency IDs and names. Each entry in `dependencies.values[].values[]` has an `id` (use with `--deps`) and a `name`.
 
 ---
 
