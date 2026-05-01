@@ -77,7 +77,7 @@ The app starts on `http://localhost:8080`.
 Custom dependencies example:
 
 ```bash
-node scripts/create-basic-project.mjs my-app com.acme --deps web,actuator,devtools,native,data-jpa,postgresql
+node scripts/create-basic-project.mjs my-app com.acme --deps web
 ```
 
 ---
