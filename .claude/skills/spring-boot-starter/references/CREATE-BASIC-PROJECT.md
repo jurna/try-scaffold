@@ -61,7 +61,7 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 | `web` | Spring Web |
 | `data-mongodb` | Spring Data MongoDB |
 | `lombok` | Lombok |
-| `springdoc-openapi-ui` | SpringDoc OpenAPI (Swagger UI) |
+| `springdoc-openapi` | SpringDoc OpenAPI (Swagger UI) |
 | `testcontainers` | Testcontainers |
 | `validation` | Validation |
 | `actuator` | Spring Boot Actuator |
