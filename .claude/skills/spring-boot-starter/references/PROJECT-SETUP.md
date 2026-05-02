@@ -22,56 +22,14 @@
 - **.editorconfig** → enforce indentation, charset, LF endings, trim trailing whitespace
 - **.gitattributes** → normalize line endings, mark binary files, improve diffs
 - **.dockerignore** → keep Docker build context lean; exclude `build/`, `.git/`, etc.
-- **.devcontainer/** (optional) → reproducible Dev Container with Java 25
-- **.vscode/** (optional) → recommended extensions/settings (Java, Spring, YAML)
+- **.devcontainer/** (auto-applied) → reproducible Dev Container with Java 25
+- **.vscode/** (auto-applied) → recommended extensions/settings (Java, Spring, YAML)
 
 ---
 
 ## `.gitignore`
 
-**Goals:** prevent committing build artifacts, sensitive files, and OS/IDE clutter. The skill ships an opinionated template; enrich if needed.
-
-**Template highlights** (see `assets/gitignore`):
-
-```gitignore
-# Gradle / Java
-.gradle/
-build/
-!gradle/wrapper/gradle-wrapper.jar
-
-# IDEs
-*.iml
-.idea/
-.vscode/
-*.classpath
-*.project
-*.settings/
-
-# Logs & OS junk
-logs/
-*.log
-.DS_Store
-Thumbs.db
-
-# Env files — keep .env.sample committed
-!.env.sample
-.env
-.env.*
-.env.local
-
-# Coverage / reports
-coverage/
-jacoco.exec
-
-# Native builds
-**/*.exe
-*.dll
-*.so
-
-# Misc
-*.orig
-*.rej
-```
+**Goals:** prevent committing build artifacts, sensitive files, and OS/IDE clutter. Applied automatically via `mergeGitignore()` from `assets/gitignore`; covers Gradle/Java, IDEs, OS junk, `.env*`, coverage reports, and native binaries. Enrich if needed — re-running the script will not overwrite custom additions.
 
 > **Tip:** Start.spring.io generates a minimal `.gitignore`; the generator scripts **append/merge** our template to ensure all ignores are covered.
 
@@ -102,131 +60,25 @@ APP_API_SECRET=replace-me
 
 ## `.editorconfig`
 
-Keeps formatting consistent across IDEs and languages.
-
-```ini
-# top-most EditorConfig file
-root = true
-
-[*]
-charset = utf-8
-end_of_line = lf
-insert_final_newline = true
-indent_style = space
-indent_size = 4
-trim_trailing_whitespace = true
-max_line_length = 120
-
-[{*.yml,*.yaml}]
-indent_size = 2
-
-[{*.json,*.js,*.mjs}]
-indent_size = 2
-
-[{*.md,*.adoc}]
-trim_trailing_whitespace = false
-
-[Makefile]
-indent_style = tab
-```
+Applied automatically from `assets/editorconfig`. Keeps formatting consistent across IDEs: UTF-8, LF endings, 4-space indent for Java (2 for YAML/JSON), trim trailing whitespace, max line length 120.
 
 ---
 
 ## `.gitattributes`
 
-Normalize line endings and improve diffs for certain file types.
-
-```gitattributes
-# Text normalization
-* text=auto eol=lf
-
-# Binary files
-*.png binary
-*.jpg binary
-*.jar binary
-*.gz binary
-*.zip binary
-
-# Improve diffs
-*.md diff=markdown
-*.adoc diff=asciidoc
-*.java diff=java
-*.kt diff=java
-*.sql diff=sql
-
-# Keep scripts executable
-scripts/*.mjs text eol=lf
-```
-
-> Ensures contributors on Windows/macOS/Linux don't fight line endings.
+Applied automatically from `assets/gitattributes`. Normalizes all text files to LF, marks binaries (`.png`, `.jpg`, `.jar`, `.gz`, `.zip`), and improves diffs for Java, Kotlin, SQL, and Markdown. Ensures contributors on Windows/macOS/Linux don't fight line endings.
 
 ---
 
 ## `.dockerignore`
 
-Shrink Docker build context; speeds up builds and avoids leaking secrets.
-
-```dockerignore
-.git
-.gitignore
-build/
-.gradle/
-.env
-.env.*
-.idea
-.vscode
-.DS_Store
-**/*.log
-coverage
-```
+Applied automatically from `assets/dockerignore`. Shrinks Docker build context; excludes `.git`, `build/`, `.gradle/`, `.env`, IDE directories, logs, and coverage artifacts to speed up builds and avoid leaking secrets.
 
 ---
 
 ## DevContainer Setup
 
-A [Dev Container](https://containers.dev/) gives every contributor the same pre-configured environment — Java 25 and Gradle — without installing anything locally beyond VS Code or GitHub Codespaces.
-
-### `.devcontainer/devcontainer.json`
-
-```jsonc
-{
-    "name": "Spring Boot Dev Environment",
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-
-    "features": {
-        "ghcr.io/devcontainers/features/java:1": {
-            "version": "25",
-            "installGradle": "true"
-        }
-    },
-
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "vscjava.vscode-java-pack",
-                "pivotal.vscode-spring-boot",
-                "vmware.vscode-boot-dev-pack",
-                "redhat.vscode-yaml"
-            ],
-            "settings": {
-                "java.compile.nullAnalysis.mode": "automatic",
-                "editor.formatOnSave": true,
-                "files.eol": "\n"
-            }
-        }
-    },
-
-    "postCreateCommand": "./gradlew dependencies -q || true",
-    "postStartCommand": "echo '✅ Dev container ready — run ./gradlew bootRun'",
-
-    "forwardPorts": [8080],
-    "portsAttributes": {
-        "8080": { "label": "Spring Boot", "onAutoForward": "notify" }
-    },
-
-    "remoteUser": "vscode"
-}
-```
+A [Dev Container](https://containers.dev/) gives every contributor the same pre-configured environment — Java 25 and Gradle — without installing anything locally beyond VS Code or GitHub Codespaces. Applied automatically from `assets/devcontainer/devcontainer.json` (Java 25 feature, Spring/Java VS Code extensions, port 8080 forwarded).
 
 ### Customising the DevContainer
 
@@ -238,18 +90,8 @@ A [Dev Container](https://containers.dev/) gives every contributor the same pre-
 
 ## Optional dotfiles & folders
 
-- **`.vscode/extensions.json`** (recommended):
-  ```json
-  {
-    "recommendations": [
-      "vscjava.vscode-java-pack",
-      "pivotal.vscode-spring-boot",
-      "redhat.vscode-yaml"
-    ]
-  }
-  ```
-- **`.vscode/settings.json`**: enable format-on-save, set Java code style, `files.eol = "\n"`.
-- **`.github/workflows/`** (CI): a starter GitHub Actions workflow is available at `assets/ci/github-actions.yml`. Copy it to `.github/workflows/ci.yml` in your project to get build and test checks on every push.
+- **`.vscode/extensions.json`** and **`.vscode/settings.json`**: applied automatically (Java + Spring extensions, format-on-save, `files.eol = "\n"`).
+- **`.github/workflows/ci.yml`** (CI): applied automatically from `assets/ci/github-actions.yml` — build and test checks on every push.
 
 ---
 
