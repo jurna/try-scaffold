@@ -230,7 +230,7 @@ A [Dev Container](https://containers.dev/) gives every contributor the same pre-
 
 ### Customising the DevContainer
 
-- **Add a database?** Switch to a `dockerComposeFile` approach, add a PostgreSQL service, and add port `5432` to `forwardPorts`.
+- **Add a database?** Switch to a `dockerComposeFile` approach, add a database service, and forward the relevant port in `forwardPorts`.
 - **Add Redis, Kafka, etc.?** Same — use Docker Compose alongside the `app` service.
 - **GitHub Codespaces**: works out of the box — push `.devcontainer/` and open the repo in Codespaces.
 

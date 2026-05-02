@@ -2,7 +2,6 @@
   "javaVersion": "25",
   "springBootPreferredMajor": "4",
   "springBootFallback": "4.0.5",
-  "postgresVersion": "18",
   "temurinVersion": "25",
   "mavenMinVersion": "3.8.0",
   "graalvmVersion": "25",

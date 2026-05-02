@@ -35,7 +35,6 @@ function getVersionValue(key, defaultValue = '') {
 export function getJavaVersion() { return getVersionValue('javaVersion', '25'); }
 export function getBootPreferredMajor() { return getVersionValue('springBootPreferredMajor', '4'); }
 export function getBootFallback() { return getVersionValue('springBootFallback', '4.0.5'); }
-export function getPostgresVersion() { return getVersionValue('postgresVersion', '18'); }
 export function getTemurinVersion() { return getVersionValue('temurinVersion', '25'); }
 export function getMavenMinVersion() { return getVersionValue('mavenMinVersion', '3.8.0'); }
 export function getGraalvmVersion() { return getVersionValue('graalvmVersion', '25'); }
@@ -301,10 +300,9 @@ function stripFrontendCopyLines(filePath) {
 /**
  * Apply additional dotfiles after project extraction.
  * @param {string} projectDir
- * @param {{ database?: boolean, frontend?: boolean, packageName?: string }} [options]
+ * @param {{ frontend?: boolean, packageName?: string }} [options]
  */
 export function applyDotfiles(projectDir, options = {}) {
-  const hasDatabase = options.database === true;
   const hasFrontend = options.frontend === true;
   console.log('  📄 Applying dotfiles and Docker assets…');
   mergeGitignore(projectDir);
@@ -312,31 +310,20 @@ export function applyDotfiles(projectDir, options = {}) {
   copyAssetIfMissing('editorconfig', join(projectDir, '.editorconfig'));
   copyAssetIfMissing('gitattributes', join(projectDir, '.gitattributes'));
   copyAssetIfMissing('dockerignore', join(projectDir, '.dockerignore'));
-  // Docker deployment files (Dockerfiles always, compose files only with database)
+  // Docker deployment files
   copyAssetIfMissing('Dockerfile', join(projectDir, 'Dockerfile'));
   copyAssetIfMissing('Dockerfile-native', join(projectDir, 'Dockerfile-native'));
   if (!hasFrontend) {
     stripFrontendCopyLines(join(projectDir, 'Dockerfile'));
     stripFrontendCopyLines(join(projectDir, 'Dockerfile-native'));
   }
-  if (hasDatabase) {
-    copyAssetIfMissing('compose.yaml', join(projectDir, 'compose.yaml'));
-    copyAssetIfMissing('docker-compose.yml', join(projectDir, 'docker-compose.yml'));
-    copyAssetIfMissing('docker-compose-native.yml', join(projectDir, 'docker-compose-native.yml'));
-  } else {
-    // No-DB projects still benefit from a single-service compose wrapper so
-    // `docker compose up --build` works out of the box for both JVM and native.
-    copyAssetIfMissing('docker-compose-nodb.yml', join(projectDir, 'docker-compose.yml'));
-    copyAssetIfMissing('docker-compose-native-nodb.yml', join(projectDir, 'docker-compose-native.yml'));
-  }
+  copyAssetIfMissing('docker-compose-nodb.yml', join(projectDir, 'docker-compose.yml'));
+  copyAssetIfMissing('docker-compose-native-nodb.yml', join(projectDir, 'docker-compose-native.yml'));
   // Optional .vscode recommendations
   copyAssetIfMissing(join('vscode', 'extensions.json'), join(projectDir, '.vscode', 'extensions.json'));
   copyAssetIfMissing(join('vscode', 'settings.json'), join(projectDir, '.vscode', 'settings.json'));
   // DevContainer setup
   copyAssetIfMissing(join('devcontainer', 'devcontainer.json'), join(projectDir, '.devcontainer', 'devcontainer.json'));
-  if (hasDatabase) {
-    copyAssetIfMissing(join('devcontainer', 'docker-compose.yml'), join(projectDir, '.devcontainer', 'docker-compose.yml'));
-  }
   // Fallback index.html so the app shows a helpful page before the frontend is built
   if (hasFrontend) {
     copyAssetIfMissing('index.html', join(projectDir, 'src', 'main', 'resources', 'static', 'index.html'));

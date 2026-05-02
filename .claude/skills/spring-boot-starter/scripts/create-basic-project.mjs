@@ -47,7 +47,7 @@ try {
     dependencies,
     configurationFileFormat: 'yaml',
   });
-  applyDotfiles(projectName, { database: false, frontend: false, packageName });
+  applyDotfiles(projectName, { frontend: false, packageName });
 } catch (err) {
   console.error(`✗ Failed to create project: ${err?.message || String(err)}`);
   process.exit(1);

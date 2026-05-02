@@ -4,9 +4,3 @@ services:
     volumes:
       - ..:/workspaces/${localWorkspaceFolderBasename}:cached
     command: sleep infinity
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-volumes:
-  postgres_data:
