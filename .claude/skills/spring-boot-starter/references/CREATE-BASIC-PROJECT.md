@@ -53,11 +53,8 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 
 ## Default dependencies
 
-When `--deps` is omitted the following are used:
+**Always pass `--deps` explicitly when running the script.** If the user has not specified features, use the default list below.
 
-```
-web,data-mongodb,lombok,springdoc-openapi-ui,testcontainers,validation,actuator,devtools
-```
 
 | ID | Name |
 |----|------|
@@ -69,8 +66,6 @@ web,data-mongodb,lombok,springdoc-openapi-ui,testcontainers,validation,actuator,
 | `validation` | Validation |
 | `actuator` | Spring Boot Actuator |
 | `devtools` | Spring Boot DevTools |
-
-Pass `--deps <dep1,dep2,...>` to replace the entire list.
 
 ---
 

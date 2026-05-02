@@ -19,14 +19,7 @@ Centralized versions live in `versions.json`. Scripts read from it via `scripts/
 
 ## Basic Spring Boot Project
 
-Use the `create-basic-project.mjs` script to create a basic Spring Boot project:
-```bash
-node scripts/create-basic-project.mjs
-```
-
-Optional parameters: `[PROJECT_NAME] [GROUP_ID] [ARTIFACT_ID] [PACKAGE_NAME] [JAVA_VERSION]`
-
-Flag: `--boot-version <x.y.z>` to override the Spring Boot version.
+Read [CREATE-BASIC-PROJECT.md](references/CREATE-BASIC-PROJECT.md) for full CLI usage, arguments, flags, default dependencies, and generated project structure.
 
 ## Best Practices
 
