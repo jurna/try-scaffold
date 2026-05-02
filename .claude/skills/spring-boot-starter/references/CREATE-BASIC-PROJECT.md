@@ -51,6 +51,29 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 
 ---
 
+## Default dependencies
+
+When `--deps` is omitted the following are used:
+
+```
+web,data-mongodb,lombok,springdoc-openapi-ui,testcontainers,validation,actuator,devtools
+```
+
+| ID | Name |
+|----|------|
+| `web` | Spring Web |
+| `data-mongodb` | Spring Data MongoDB |
+| `lombok` | Lombok |
+| `springdoc-openapi-ui` | SpringDoc OpenAPI (Swagger UI) |
+| `testcontainers` | Testcontainers |
+| `validation` | Validation |
+| `actuator` | Spring Boot Actuator |
+| `devtools` | Spring Boot DevTools |
+
+Pass `--deps <dep1,dep2,...>` to replace the entire list.
+
+---
+
 ## Generated project
 
 | Setting | Value |
@@ -58,7 +81,7 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 | Build tool | Gradle |
 | Language | Java |
 | Packaging | JAR |
-| Dependencies | Specified via `--deps` |
+| Dependencies | Default set above, or `--deps` override |
 
 The project is extracted into `./<PROJECT_NAME>/`.
 

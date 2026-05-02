@@ -40,10 +40,6 @@ When creating Spring Boot projects:
 5. Include Spring Boot DevTools for development productivity
 7. The user must review changes before they are committed to git. Ask the user before initializing a Git repository, or running git commands.
 
-## Dependencies
-
-Generated projects include: Spring Web, Spring Boot Actuator, DevTools, and GraalVM native support.
-
 ## Validation
 
 | # | What | Command |
