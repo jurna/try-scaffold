@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Shared version utilities for dr-jskill scripts
+// Shared version utilities for spring-boot-starter scripts
 
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync, copyFileSync, createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
@@ -12,7 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = process.env.ROOT_DIR || resolve(__dirname, '..', '..');
 const VERSIONS_FILE = process.env.VERSIONS_FILE || resolve(ROOT_DIR, 'versions.json');
 const ASSETS_DIR = resolve(ROOT_DIR, 'assets');
-const DOTFILES_MARKER = '# === dr-jskill additions ===';
+const DOTFILES_MARKER = '# === spring-boot-starter additions ===';
 
 /** Default timeout for HTTP requests (10 seconds) */
 const FETCH_TIMEOUT_MS = 10_000;

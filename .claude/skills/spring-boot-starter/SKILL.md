@@ -1,12 +1,12 @@
 ---
-name: dr-jskill
+name: spring-boot-starter
 description: "Creates a basic Java + Spring Boot project with Gradle, project setup (dotfiles, devcontainer), and REST API. Use when bootstrapping a Spring Boot application."
 ---
 
-# Spring Boot skill that follows Julien Dubois' best practices.
+# Spring Boot skill
 
 ## Overview
-This agent skill helps you create basic Spring Boot projects following [Julien Dubois](https://www.julien-dubois.com)' best practices. It provides a script to bootstrap Spring Boot applications using [https://start.spring.io](https://start.spring.io).
+This agent skill helps you create basic Spring Boot projects using Spring Boot best practices. It provides a script to bootstrap Spring Boot applications using [https://start.spring.io](https://start.spring.io).
 
 ## Version Management
 
