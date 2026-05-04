@@ -66,6 +66,8 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 | `validation` | Validation |
 | `actuator` | Spring Boot Actuator |
 | `devtools` | Spring Boot DevTools |
+| `oauth2-resource-server` | OAuth2 Resource Server |
+| `security` | Spring Security |
 
 ---
 
