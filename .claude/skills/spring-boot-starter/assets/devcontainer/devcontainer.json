@@ -2,8 +2,7 @@
 // See https://containers.dev/implementors/json_reference/
 {
     "name": "Spring Boot Dev Environment",
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "app",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
     // JDK 25 + Node 24 features
@@ -16,7 +15,8 @@
             "version": "24"
         },
         "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-        "ghcr.io/devcontainers/features/github-cli:1": {}
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
     },
 
     // VS Code extensions to install inside the container
