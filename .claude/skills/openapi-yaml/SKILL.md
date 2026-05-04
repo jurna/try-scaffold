@@ -5,8 +5,18 @@ description: Creates, updates, reviews, and validates OpenAPI 3.1 YAML files. Us
 
 # OpenAPI 3.1 — conventions and best practices
 
-> No code generation — YAML only. Run `npx @redocly/cli lint openapi.yaml` to validate.
+> No code generation — YAML only.
 > For type mappings, validation constraints, HTTP status codes, and schema composition, read `references/types.md`.
+
+## Mandatory: always validate after writing or editing
+
+After every file write or edit, immediately run:
+
+```
+npx @redocly/cli lint <path-to-file>
+```
+
+Fix all **errors** before reporting the task as done. Warnings are advisory — explain them to the user but do not block on them. Never skip this step.
 
 ## Non-obvious rules
 
@@ -22,16 +32,10 @@ middleName:
   nullable: true
 ```
 
-**IDs — always `int64` for numeric IDs; `uuid` for distributed/external IDs**
+**IDs — always `string`**
 ```yaml
 id:
-  type: integer
-  format: int64
-  readOnly: true
-
-externalId:
   type: string
-  format: uuid
   readOnly: true
 ```
 

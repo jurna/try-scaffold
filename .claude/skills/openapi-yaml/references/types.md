@@ -6,7 +6,7 @@
 |---|---|---|---|
 | Text | `string` | — | |
 | 32-bit integer | `integer` | `int32` | |
-| 64-bit integer | `integer` | `int64` | Use for database IDs |
+| 64-bit integer | `integer` | `int64` | Do not use for entity IDs |
 | Double-precision float | `number` | `double` | Avoid for money |
 | Single-precision float | `number` | `float` | Avoid for money |
 | High-precision decimal | `string` | — | Preserves precision; document format in `description` |
@@ -39,12 +39,11 @@ price:
   description: Decimal string e.g. "19.99"
 ```
 
-### Never use `int32` for database IDs
-IDs commonly exceed 2^31 in production. Always use `int64`:
+### Never use `integer` for entity IDs
+Use `type: string` for all entity IDs:
 ```yaml
 id:
-  type: integer
-  format: int64
+  type: string
   readOnly: true
 ```
 
@@ -85,8 +84,7 @@ UserResponse:
   required: [id, email, firstName, lastName, status, createdAt]
   properties:
     id:
-      type: integer
-      format: int64
+      type: string
       readOnly: true
     email:
       type: string
