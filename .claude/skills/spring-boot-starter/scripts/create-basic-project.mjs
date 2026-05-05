@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Script to create a basic Spring Boot project from start.spring.io
 
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   getJavaVersion, resolveBootVersion,
-  downloadAndExtractProject, parseArgs, applyDotfiles,
+  downloadAndExtractProject, parseArgs, applyDotfiles, applyOpenApiGenerator,
 } from './lib/versions.mjs';
 
 function usage() {
@@ -11,7 +13,27 @@ function usage() {
 Options:
   --boot-version <version>   Override Spring Boot version
   --deps <dep1,dep2,...>     Comma-separated Spring Initializr dependency IDs
+  --openapi-spec <path>      Path to an existing OpenAPI spec (auto-detected if omitted)
   -h|--help                  Show this help`);
+}
+
+/**
+ * Locate an OpenAPI spec to wire into the generated project.
+ * If an explicit path is given, resolve and verify it.
+ * Otherwise probe the current working directory for common spec locations.
+ * Returns the absolute path, or null if nothing is found.
+ */
+function resolveOpenApiSpec(explicit) {
+  if (explicit) {
+    const abs = resolve(explicit);
+    if (!existsSync(abs)) throw new Error(`OpenAPI spec not found: ${explicit}`);
+    return abs;
+  }
+  for (const rel of ['contracts/openapi.yaml', 'contract/openapi.yaml', 'openapi.yaml']) {
+    const abs = resolve(rel);
+    if (existsSync(abs)) return abs;
+  }
+  return null;
 }
 
 const { flags, positional } = parseArgs(process.argv);
@@ -48,6 +70,8 @@ try {
     configurationFileFormat: 'yaml',
   });
   applyDotfiles(projectName, { frontend: false, packageName });
+  const specPath = resolveOpenApiSpec(flags.openapiSpec);
+  if (specPath) applyOpenApiGenerator(projectName, specPath, groupId);
 } catch (err) {
   console.error(`✗ Failed to create project: ${err?.message || String(err)}`);
   process.exit(1);

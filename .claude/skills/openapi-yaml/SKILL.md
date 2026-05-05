@@ -1,6 +1,6 @@
 ---
 name: openapi-yaml
-description: Creates, updates, reviews, and validates OpenAPI 3.1 YAML files. Use this skill whenever the user wants to write or edit an OpenAPI spec, swagger file, API contract, or REST API YAML definition — even if they just say "write me an API spec", "add an endpoint to the spec", "check my swagger", "create openapi yaml", "update the api contract", or "review my openapi". Trigger even when the user pastes YAML that looks like an API spec and asks what's wrong with it or how to improve it.
+description: Creates, updates, reviews, and validates OpenAPI 3.1 YAML files. Use this skill whenever the user wants to write or edit an OpenAPI spec, swagger file, API contract, or REST API YAML definition — even if they just say "write me an API spec", "add an endpoint to the spec", "create openapi yaml", "update the api contract".
 ---
 
 # OpenAPI 3.1 — conventions and best practices
@@ -16,7 +16,7 @@ After every file write or edit, immediately run:
 npx @redocly/cli lint <path-to-file>
 ```
 
-Fix all **errors** before reporting the task as done. Warnings are advisory — explain them to the user but do not block on them. Never skip this step.
+Fix all **errors and warnings** before reporting the task as done. Never skip this step.
 
 ## Non-obvious rules
 

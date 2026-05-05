@@ -41,6 +41,7 @@ All arguments are optional — defaults are applied for any omitted value.
 |------|-------------|
 | `--boot-version <x.y.z>` | Pin a specific Spring Boot version (default: latest stable 4.x) |
 | `--deps <dep1,dep2,...>` | Comma-separated Spring Initializr dependency IDs |
+| `--openapi-spec <path>` | Path to an existing OpenAPI spec; adds `org.openapi.generator` plugin to `build.gradle` and generates Spring controller interfaces at build time. The spec is referenced in-place — not copied. Auto-detected from `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory if omitted. |
 | `-h`, `--help` | Print usage and exit |
 
 ---
@@ -97,6 +98,18 @@ Custom dependencies example:
 ```bash
 node scripts/create-basic-project.mjs my-app com.acme --deps web
 ```
+
+**With OpenAPI contract generation** — if `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` exists in the current directory, the plugin is configured automatically:
+
+```bash
+# Auto-detected from contract/openapi.yaml in the repo root
+node scripts/create-basic-project.mjs my-app com.acme
+
+# Explicit spec path
+node scripts/create-basic-project.mjs my-app com.acme --openapi-spec path/to/openapi.yaml
+```
+
+The generated project's `build.gradle` will include the `org.openapi.generator` plugin. Running `./gradlew openApiGenerate` (or `./gradlew build`) produces Spring controller interfaces under `build/generated/openapi/src/main/java`, which are automatically on the compile classpath.
 
 ---
 
