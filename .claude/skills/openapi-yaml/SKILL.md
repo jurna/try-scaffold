@@ -8,6 +8,10 @@ description: Creates, updates, reviews, and validates OpenAPI 3.1 YAML files. Us
 > No code generation — YAML only.
 > For type mappings, validation constraints, HTTP status codes, and schema composition, read `references/types.md`.
 
+## Output file
+
+Always write the OpenAPI spec to `contract/openapi.yaml` (relative to the project root). Create the `contract/` directory if it does not exist.
+
 ## Mandatory: always validate after writing or editing
 
 After every file write or edit, immediately run:
