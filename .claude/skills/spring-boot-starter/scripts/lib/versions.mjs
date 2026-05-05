@@ -4,7 +4,7 @@
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync, copyFileSync, createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
-import { resolve, dirname, join } from 'node:path';
+import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
@@ -53,6 +53,7 @@ export function getBootstrapIconsVersion() { return getVersionValue('bootstrapIc
 export function getTestcontainersVersion() { return getVersionValue('testcontainersVersion', '2.0.0'); }
 export function getSpringFrameworkVersion() { return getVersionValue('springFrameworkVersion', '7.0'); }
 export function getHibernateVersion() { return getVersionValue('hibernateVersion', '7.1'); }
+export function getOpenApiGeneratorVersion() { return getVersionValue('openApiGeneratorVersion', '7.13.0'); }
 
 /**
  * Strip legacy qualifiers (.RELEASE, .GA) that Spring Boot 4+ no longer uses.
@@ -346,6 +347,71 @@ export function applyDotfiles(projectDir, options = {}) {
 }
 
 /**
+ * Patch build.gradle to add the org.openapi.generator plugin and configure it to generate
+ * Spring controller interfaces from an existing OpenAPI spec (referenced in-place).
+ *
+ * Only supports Groovy DSL (gradle-project), which is what create-basic-project.mjs generates.
+ */
+export function applyOpenApiGenerator(projectDir, specAbsPath, groupId) {
+  const buildGradlePath = join(projectDir, 'build.gradle');
+  if (!existsSync(buildGradlePath)) return;
+
+  const version = getOpenApiGeneratorVersion();
+  // Normalize to forward slashes so Gradle string interpolation works on all platforms
+  const relSpec = relative(projectDir, specAbsPath).split(/[\\/]/).join('/');
+
+  let content = readFileSync(buildGradlePath, 'utf8');
+
+  // Insert the plugin ID before the closing } of the plugins {} block
+  content = content.replace(
+    /(plugins \{[\s\S]*?)(\n\})/,
+    `$1\n    id 'org.openapi.generator' version '${version}'$2`
+  );
+
+  content += `
+openApiGenerate {
+    generatorName = "spring"
+    inputSpec = "$rootDir/${relSpec}"
+    outputDir = layout.buildDirectory.dir("generated/openapi").get().asFile.toString()
+    apiPackage = "${groupId}.api"
+    modelPackage = "${groupId}.api.model"
+    invokerPackage = "${groupId}.api.invoker"
+
+    configOptions = [
+        "interfaceOnly"       : "true",
+        "useSpringBoot3"      : "true",
+        "useJakartaEe"        : "true",
+        "library"             : "spring-boot",
+        "useTags"             : "true",
+        "useBeanValidation"   : "true",
+        "openApiNullable"     : "false",
+        "useOptional"         : "false",
+        "dateLibrary"         : "java8",
+        "skipDefaultInterface": "true",
+    ]
+
+    generateApiTests = false
+    generateApiDocumentation = false
+    generateModelTests = false
+    generateModelDocumentation = false
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir layout.buildDirectory.dir("generated/openapi/src/main/java")
+        }
+    }
+}
+
+compileJava.dependsOn tasks.named('openApiGenerate')
+`;
+
+  writeFileSync(buildGradlePath, content, 'utf8');
+  console.log(`  ✅ OpenAPI generator configured (inputSpec: ${relSpec})`);
+}
+
+/**
  * Parse CLI arguments into an object with flags and positional args.
  */
 export function parseArgs(argv) {
@@ -365,6 +431,9 @@ export function parseArgs(argv) {
       i += 2;
     } else if (args[i] === '--frontend') {
       flags.frontend = args[i + 1];
+      i += 2;
+    } else if (args[i] === '--openapi-spec') {
+      flags.openapiSpec = args[i + 1];
       i += 2;
     } else if (args[i] === '-h' || args[i] === '--help') {
       flags.help = true;

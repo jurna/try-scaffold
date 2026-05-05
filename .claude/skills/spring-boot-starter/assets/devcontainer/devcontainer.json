@@ -2,8 +2,7 @@
 // See https://containers.dev/implementors/json_reference/
 {
     "name": "Spring Boot Dev Environment",
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "app",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
     // JDK 25 + Node 24 features
