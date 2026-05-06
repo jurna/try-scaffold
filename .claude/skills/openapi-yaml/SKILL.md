@@ -12,15 +12,61 @@ description: Creates, updates, reviews, and validates OpenAPI 3.1 YAML files. Us
 
 Always write the OpenAPI spec to `contract/openapi.yaml` (relative to the project root). Create the `contract/` directory if it does not exist.
 
+## Setup — do this before writing the spec
+
+**Copy `files/redocly.yaml` to the project root** (if it does not already exist).
+
 ## Mandatory: always validate after writing or editing
 
-After every file write or edit, immediately run:
+After every file write or edit, run lint from the **project root** (Redocly only auto-detects `redocly.yaml` from there):
 
 ```
-npx @redocly/cli lint <path-to-file>
+npx @redocly/cli lint contract/openapi.yaml
 ```
 
 Fix all **errors and warnings** before reporting the task as done. Never skip this step.
+
+## Required top-level fields (lint will fail without these)
+
+Every spec must have all of the following or Redocly will error:
+
+**`info.license`** — must be empty:
+```yaml
+info:
+  title: My API
+  version: 1.0.0
+```
+
+**`servers`** — must not be empty:
+```yaml
+servers:
+  - url: https://api.example.com
+    description: Production
+```
+
+**`security`** at root level + matching `securitySchemes` in `components`:
+```yaml
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+```
+
+**`tags[].description`** — every tag must have a description:
+```yaml
+tags:
+  - name: Users
+    description: Manage user accounts
+```
+
+**Every operation must have at least one `4XX` response.** Include `401` on all secured endpoints and `400` on endpoints with a request body.
+
+**Never define unused components.** If a `$ref` is removed from all usages, remove the component too — Redocly warns on unused schemas, responses, etc.
 
 ## Non-obvious rules
 
