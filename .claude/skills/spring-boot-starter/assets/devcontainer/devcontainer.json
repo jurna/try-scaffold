@@ -8,8 +8,7 @@
     // JDK 25 + Node 24 features
     "features": {
         "ghcr.io/devcontainers/features/java:1": {
-            "version": "25",
-            "installMaven": "true"
+            "version": "25"
         },
         "ghcr.io/devcontainers/features/node:1": {
             "version": "24"
@@ -41,8 +40,8 @@
     },
 
     // Lifecycle hooks
-    "postCreateCommand": "./mvnw dependency:go-offline -q || true",
-    "postStartCommand": "echo '✅ Dev container ready — run ./mvnw spring-boot:run'",
+    "postCreateCommand": "./gradlew dependencies --no-daemon -q || true",
+    "postStartCommand": "echo '✅ Dev container ready — run ./gradlew bootRun'",
 
     // Forward app + front-end dev ports
     "forwardPorts": [8080, 5173, 5432],

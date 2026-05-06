@@ -126,7 +126,7 @@ springBoot {
 }
 ```
 
-Without it, Docker builds and native compilations will fail with:
+Without it, native compilations will fail with:
 ```
 Unable to find a suitable main class, please add a 'mainClass' property
 ```

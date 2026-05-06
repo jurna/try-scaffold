@@ -1,7 +1,6 @@
-# Maven / Java
-/target/
-!.mvn/wrapper/maven-wrapper.jar
-.mvn/timing.properties
+# Gradle / Java
+/build/
+.gradle/
 
 # IDEs
 *.iml
@@ -57,6 +56,3 @@ dependency-check-report.*
 # Misc
 *.orig
 *.rej
-
-# JDTLS per-project workspace (see .github/lsp.json)
-.jdtls-workspace/

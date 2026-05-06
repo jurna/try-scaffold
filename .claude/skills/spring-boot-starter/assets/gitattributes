@@ -22,9 +22,8 @@ auto.crlf=false
 *.yml diff=yaml
 *.yaml diff=yaml
 *.xml diff=xml
-*.pom diff=xml
 
 # Keep scripts executable
 scripts/*.mjs text eol=lf
 scripts/create-project text eol=lf
-mvnw text eol=lf
+gradlew text eol=lf

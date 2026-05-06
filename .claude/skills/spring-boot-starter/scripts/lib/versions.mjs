@@ -36,12 +36,10 @@ export function getJavaVersion() { return getVersionValue('javaVersion', '25'); 
 export function getBootPreferredMajor() { return getVersionValue('springBootPreferredMajor', '4'); }
 export function getBootFallback() { return getVersionValue('springBootFallback', '4.0.5'); }
 export function getTemurinVersion() { return getVersionValue('temurinVersion', '25'); }
-export function getMavenMinVersion() { return getVersionValue('mavenMinVersion', '3.8.0'); }
 export function getGraalvmVersion() { return getVersionValue('graalvmVersion', '25'); }
 export function getNodeVersion() { return getVersionValue('nodeVersion', '24.15.0'); }
 export function getNpmVersion() { return getVersionValue('npmVersion', '11.12.1'); }
 export function getViteVersion() { return getVersionValue('viteVersion', '8'); }
-export function getMavenFrontendPluginVersion() { return getVersionValue('mavenFrontendPluginVersion', '1.15.1'); }
 export function getVueVersion() { return getVersionValue('vueVersion', '3'); }
 export function getPiniaVersion() { return getVersionValue('piniaVersion', '3'); }
 export function getVueRouterVersion() { return getVersionValue('vueRouterVersion', '5'); }
@@ -65,10 +63,10 @@ function stripLegacyQualifier(version) {
 }
 
 /**
- * Check whether a Spring Boot version exists on Maven Central.
- * Returns true if the POM can be found (HTTP 200).
+ * Check whether a Spring Boot version has been published to the central repository.
+ * Returns true if the artifact can be found (HTTP 200).
  */
-async function existsOnMavenCentral(version) {
+async function isBootVersionPublished(version) {
   const groupPath = 'org/springframework/boot/spring-boot';
   const url = `https://repo1.maven.org/maven2/${groupPath}/${version}/spring-boot-${version}.pom`;
   try {
@@ -82,7 +80,7 @@ async function existsOnMavenCentral(version) {
 /**
  * Resolve preferred Spring Boot version with fallback.
  * Fetches the default boot version from start.spring.io metadata,
- * validates it exists on Maven Central, and strips legacy qualifiers.
+ * validates it has been published, and strips legacy qualifiers.
  * Only considers versions ≥ 4.x.
  */
 export async function resolveBootVersion(preferredMajor, fallback) {
@@ -118,11 +116,11 @@ export async function resolveBootVersion(preferredMajor, fallback) {
     const cleaned = stripLegacyQualifier(fetched);
 
     if (cleaned.startsWith(`${preferredMajor}.`)) {
-      // Verify the version actually exists on Maven Central
-      if (await existsOnMavenCentral(cleaned)) {
+      // Verify the version has been published
+      if (await isBootVersionPublished(cleaned)) {
         return cleaned;
       }
-      console.error(`⚠️  Spring Boot ${cleaned} (from start.spring.io) is not on Maven Central yet. Using fallback ${fallback}.`);
+      console.error(`⚠️  Spring Boot ${cleaned} (from start.spring.io) is not published yet. Using fallback ${fallback}.`);
       return fallback;
     }
 
@@ -136,7 +134,7 @@ export async function resolveBootVersion(preferredMajor, fallback) {
     // Pick the highest stable version from the list
     if (candidates.length > 0) {
       candidates.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-      if (await existsOnMavenCentral(candidates[0])) {
+      if (await isBootVersionPublished(candidates[0])) {
         return candidates[0];
       }
     }
@@ -206,41 +204,7 @@ export async function downloadAndExtractProject(params) {
   extractZip(zipFile);
   unlinkSync(zipFile);
 
-  // Ensure pom.xml has <start-class> for process-aot main class detection
-  if (params.packageName && params.name) {
-    const mainClassName = toCamelCase(params.name) + 'Application';
-    patchPomStartClass(params.baseDir, `${params.packageName}.${mainClassName}`);
-  }
   console.log('  ✅ Project extracted successfully.');
-}
-
-/**
- * Convert a kebab-case or snake_case name to CamelCase.
- * e.g. "my-spring-app" → "MySpringApp"
- */
-function toCamelCase(name) {
-  return name
-    .split(/[-_]+/)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join('');
-}
-
-/**
- * Inject <start-class> property into an existing pom.xml.
- * Spring Boot 4's process-aot goal requires an explicit main class.
- */
-export function patchPomStartClass(projectDir, mainClass) {
-  const pomPath = join(projectDir, 'pom.xml');
-  if (!existsSync(pomPath)) return;
-  let pom = readFileSync(pomPath, 'utf8');
-  if (pom.includes('<start-class>')) return; // Already present
-  // Insert after <java.version>...</java.version> inside <properties>
-  const javaVersionTag = /<java\.version>[^<]*<\/java\.version>/;
-  const match = pom.match(javaVersionTag);
-  if (match) {
-    pom = pom.replace(javaVersionTag, `${match[0]}\n\t\t<start-class>${mainClass}</start-class>`);
-    writeFileSync(pomPath, pom, 'utf8');
-  }
 }
 
 /**
@@ -278,63 +242,21 @@ function writeTextFileIfMissing(destPath, content) {
 }
 
 /**
- * Comment out the frontend COPY lines in a Dockerfile when no frontend is present.
- *
- * We intentionally *comment* the lines rather than delete them: if the user later
- * scaffolds a `frontend/` directory (e.g. adds a Vue/React app to a `web` project),
- * they simply uncomment one line instead of hunting down why `docker build` fails
- * with "/app/frontend doesn't exist".
- */
-function stripFrontendCopyLines(filePath) {
-  if (!existsSync(filePath)) return;
-  let content = readFileSync(filePath, 'utf8');
-  // Replace the comment + COPY frontend block with a commented-out version
-  // that includes a clear hint for future-you.
-  content = content.replace(
-    /(^|\n)# Copy frontend directory[^\n]*\n(?:#[^\n]*\n)*COPY frontend ([^\n]+)\n/g,
-    '$1# Uncomment the next line if you add a frontend/ directory\n' +
-    '# (e.g. Vue/React/Angular via the frontend-maven-plugin build).\n' +
-    '# COPY frontend $2\n'
-  );
-  writeFileSync(filePath, content, 'utf8');
-}
-
-/**
  * Apply additional dotfiles after project extraction.
  * @param {string} projectDir
  * @param {{ frontend?: boolean, packageName?: string }} [options]
  */
 export function applyDotfiles(projectDir, options = {}) {
-  const hasFrontend = options.frontend === true;
-  console.log('  📄 Applying dotfiles and Docker assets…');
+  console.log('  📄 Applying dotfiles…');
   mergeGitignore(projectDir);
   copyAssetIfMissing('env.sample', join(projectDir, '.env.sample'));
   copyAssetIfMissing('editorconfig', join(projectDir, '.editorconfig'));
   copyAssetIfMissing('gitattributes', join(projectDir, '.gitattributes'));
-  copyAssetIfMissing('dockerignore', join(projectDir, '.dockerignore'));
-  // Docker deployment files
-  copyAssetIfMissing('Dockerfile', join(projectDir, 'Dockerfile'));
-  copyAssetIfMissing('Dockerfile-native', join(projectDir, 'Dockerfile-native'));
-  if (!hasFrontend) {
-    stripFrontendCopyLines(join(projectDir, 'Dockerfile'));
-    stripFrontendCopyLines(join(projectDir, 'Dockerfile-native'));
-  }
-  copyAssetIfMissing('docker-compose-nodb.yml', join(projectDir, 'docker-compose.yml'));
-  copyAssetIfMissing('docker-compose-native-nodb.yml', join(projectDir, 'docker-compose-native.yml'));
   // Optional .vscode recommendations
   copyAssetIfMissing(join('vscode', 'extensions.json'), join(projectDir, '.vscode', 'extensions.json'));
   copyAssetIfMissing(join('vscode', 'settings.json'), join(projectDir, '.vscode', 'settings.json'));
   // DevContainer setup
   copyAssetIfMissing(join('devcontainer', 'devcontainer.json'), join(projectDir, '.devcontainer', 'devcontainer.json'));
-  copyAssetIfMissing(join('devcontainer', 'docker-compose.yml'), join(projectDir, '.devcontainer', 'docker-compose.yml'));
-  // Fallback index.html so the app shows a helpful page before the frontend is built
-  if (hasFrontend) {
-    copyAssetIfMissing('index.html', join(projectDir, 'src', 'main', 'resources', 'static', 'index.html'));
-  }
-  // CI workflow
-  copyAssetIfMissing(join('ci', 'github-actions.yml'), join(projectDir, '.github', 'workflows', 'ci.yml'));
-  // Copilot CLI LSP config (wires JDTLS for Java)
-  copyAssetIfMissing('lsp.json', join(projectDir, '.github', 'lsp.json'));
   // Optional Node version pinning if front-end present
   try {
     const nodeVersion = getNodeVersion();
