@@ -326,6 +326,7 @@ export function applyDotfiles(projectDir, options = {}) {
   copyAssetIfMissing(join('vscode', 'settings.json'), join(projectDir, '.vscode', 'settings.json'));
   // DevContainer setup
   copyAssetIfMissing(join('devcontainer', 'devcontainer.json'), join(projectDir, '.devcontainer', 'devcontainer.json'));
+  copyAssetIfMissing(join('devcontainer', 'docker-compose.yml'), join(projectDir, '.devcontainer', 'docker-compose.yml'));
   // Fallback index.html so the app shows a helpful page before the frontend is built
   if (hasFrontend) {
     copyAssetIfMissing('index.html', join(projectDir, 'src', 'main', 'resources', 'static', 'index.html'));
