@@ -14,14 +14,14 @@ Always write the OpenAPI spec to `contract/openapi.yaml` (relative to the projec
 
 ## Setup — do this before writing the spec
 
-**Copy `files/redocly.yaml` to the project root** (if it does not already exist).
+**Copy `files/redocly.yaml` to the `contract/` folder** (if it does not already exist). Create the `contract/` directory first if needed.
 
 ## Mandatory: always validate after writing or editing
 
-After every file write or edit, run lint from the **project root** (Redocly only auto-detects `redocly.yaml` from there):
+After every file write or edit, run lint from the **`contract/` folder** (Redocly auto-detects `redocly.yaml` from the working directory):
 
 ```
-npx @redocly/cli lint contract/openapi.yaml
+cd contract && npx @redocly/cli lint openapi.yaml
 ```
 
 Fix all **errors and warnings** before reporting the task as done. Never skip this step.
