@@ -51,6 +51,12 @@
         "5432": { "label": "PostgreSQL", "onAutoForward": "silent" }
     },
 
+    // Testcontainers — DooD requires Ryuk disabled and host routed via host.docker.internal
+    "remoteEnv": {
+        "TESTCONTAINERS_RYUK_DISABLED": "true",
+        "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal"
+    },
+
     // Run as non-root
     "remoteUser": "vscode"
 }
