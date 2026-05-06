@@ -23,7 +23,7 @@ Read [CREATE-BASIC-PROJECT.md](references/CREATE-BASIC-PROJECT.md) for full CLI 
 
 ## OpenAPI Contract Generation
 
-If an `openapi.yaml` is found at `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory, the bootstrap script automatically adds the `org.openapi.generator` Gradle plugin to `build.gradle`. It generates Spring controller interfaces (delegate pattern, interface-only) from the spec into `build/generated/openapi`. The spec is referenced in-place — it is not copied into the generated project. Pass `--openapi-spec <path>` to provide an explicit path.
+If an `openapi.yaml` is found at `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory, the bootstrap script automatically adds the `io.openapiprocessor.openapi-processor` Gradle plugin to `build.gradle` and writes `src/api/mapping.yaml`. The `processSpring` task generates Spring controller interfaces and Java record DTOs into `build/openapi/java`. The spec is referenced in-place — it is not copied into the generated project. Pass `--openapi-spec <path>` to provide an explicit path.
 
 ## Best Practices
 

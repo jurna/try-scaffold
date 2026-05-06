@@ -53,7 +53,8 @@ export function getBootstrapIconsVersion() { return getVersionValue('bootstrapIc
 export function getTestcontainersVersion() { return getVersionValue('testcontainersVersion', '2.0.0'); }
 export function getSpringFrameworkVersion() { return getVersionValue('springFrameworkVersion', '7.0'); }
 export function getHibernateVersion() { return getVersionValue('hibernateVersion', '7.1'); }
-export function getOpenApiGeneratorVersion() { return getVersionValue('openApiGeneratorVersion', '7.13.0'); }
+export function getOpenApiProcessorPluginVersion() { return getVersionValue('openApiProcessorPluginVersion', '2026.1'); }
+export function getOpenApiProcessorSpringVersion() { return getVersionValue('openApiProcessorSpringVersion', '2026.3.1'); }
 
 /**
  * Strip legacy qualifiers (.RELEASE, .GA) that Spring Boot 4+ no longer uses.
@@ -346,68 +347,67 @@ export function applyDotfiles(projectDir, options = {}) {
 }
 
 /**
- * Patch build.gradle to add the org.openapi.generator plugin and configure it to generate
- * Spring controller interfaces from an existing OpenAPI spec (referenced in-place).
+ * Patch build.gradle to add the io.openapiprocessor.openapi-processor plugin and configure it
+ * to generate Spring controller interfaces and Java record DTOs from an existing OpenAPI spec
+ * (referenced in-place). Also writes src/api/mapping.yaml with the processor options.
  *
  * Only supports Groovy DSL (gradle-project), which is what create-basic-project.mjs generates.
  */
-export function applyOpenApiGenerator(projectDir, specAbsPath, groupId) {
+export function applyOpenApiProcessor(projectDir, specAbsPath, groupId) {
   const buildGradlePath = join(projectDir, 'build.gradle');
   if (!existsSync(buildGradlePath)) return;
 
-  const version = getOpenApiGeneratorVersion();
+  const pluginVersion = getOpenApiProcessorPluginVersion();
+  const springVersion = getOpenApiProcessorSpringVersion();
   // Normalize to forward slashes so Gradle string interpolation works on all platforms
   const relSpec = relative(projectDir, specAbsPath).split(/[\\/]/).join('/');
 
   let content = readFileSync(buildGradlePath, 'utf8');
 
-  // Insert the plugin ID before the closing } of the plugins {} block
   content = content.replace(
     /(plugins \{[\s\S]*?)(\n\})/,
-    `$1\n    id 'org.openapi.generator' version '${version}'$2`
+    `$1\n    id 'io.openapiprocessor.openapi-processor' version '${pluginVersion}'$2`
   );
 
   content += `
-openApiGenerate {
-    generatorName = "spring"
-    inputSpec = "$rootDir/${relSpec}"
-    outputDir = layout.buildDirectory.dir("generated/openapi").get().asFile.toString()
-    apiPackage = "${groupId}.api"
-    modelPackage = "${groupId}.api.model"
-    invokerPackage = "${groupId}.api.invoker"
-
-    configOptions = [
-        "interfaceOnly"       : "true",
-        "useSpringBoot3"      : "true",
-        "useJakartaEe"        : "true",
-        "library"             : "spring-boot",
-        "useTags"             : "true",
-        "useBeanValidation"   : "true",
-        "openApiNullable"     : "false",
-        "useOptional"         : "false",
-        "dateLibrary"         : "java8",
-        "skipDefaultInterface": "true",
-    ]
-
-    generateApiTests = false
-    generateApiDocumentation = false
-    generateModelTests = false
-    generateModelDocumentation = false
+openapiProcessor {
+    spring {
+        processor "io.openapiprocessor:openapi-processor-spring:${springVersion}"
+        apiPath "$rootDir/${relSpec}"
+        mapping "$projectDir/src/api/mapping.yaml"
+        targetDir layout.buildDirectory.dir("openapi/java").get().asFile.toString()
+        parser "INTERNAL"
+    }
 }
 
 sourceSets {
     main {
         java {
-            srcDir layout.buildDirectory.dir("generated/openapi/src/main/java")
+            srcDir layout.buildDirectory.dir("openapi/java")
         }
     }
 }
 
-compileJava.dependsOn tasks.named('openApiGenerate')
+compileJava.dependsOn tasks.named('processSpring')
 `;
 
   writeFileSync(buildGradlePath, content, 'utf8');
-  console.log(`  ✅ OpenAPI generator configured (inputSpec: ${relSpec})`);
+
+  const mappingDir = join(projectDir, 'src', 'api');
+  mkdirSync(mappingDir, { recursive: true });
+  const mappingPath = join(mappingDir, 'mapping.yaml');
+  const mappingContent = `openapi-processor-mapping: v9
+options:
+  package-name: ${groupId}.api
+  model-type: record
+  bean-validation: jakarta
+  javadoc: false
+  generated-date: false
+  format-code: false
+`;
+  writeFileSync(mappingPath, mappingContent, 'utf8');
+
+  console.log(`  ✅ OpenAPI processor configured (apiPath: ${relSpec}, model-type: record)`);
 }
 
 /**

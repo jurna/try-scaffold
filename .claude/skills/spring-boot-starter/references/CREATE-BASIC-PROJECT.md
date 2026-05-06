@@ -41,7 +41,7 @@ All arguments are optional — defaults are applied for any omitted value.
 |------|-------------|
 | `--boot-version <x.y.z>` | Pin a specific Spring Boot version (default: latest stable 4.x) |
 | `--deps <dep1,dep2,...>` | Comma-separated Spring Initializr dependency IDs |
-| `--openapi-spec <path>` | Path to an existing OpenAPI spec; adds `org.openapi.generator` plugin to `build.gradle` and generates Spring controller interfaces at build time. The spec is referenced in-place — not copied. Auto-detected from `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory if omitted. |
+| `--openapi-spec <path>` | Path to an existing OpenAPI spec; adds `io.openapiprocessor.openapi-processor` plugin to `build.gradle` (with `src/api/mapping.yaml`) and generates Spring controller interfaces and Java record DTOs at build time. The spec is referenced in-place — not copied. Auto-detected from `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory if omitted. |
 | `-h`, `--help` | Print usage and exit |
 
 ---
@@ -109,7 +109,7 @@ node scripts/create-basic-project.mjs my-app com.acme
 node scripts/create-basic-project.mjs my-app com.acme --openapi-spec path/to/openapi.yaml
 ```
 
-The generated project's `build.gradle` will include the `org.openapi.generator` plugin. Running `./gradlew openApiGenerate` (or `./gradlew build`) produces Spring controller interfaces under `build/generated/openapi/src/main/java`, which are automatically on the compile classpath.
+The generated project's `build.gradle` will include the `io.openapiprocessor.openapi-processor` plugin and `src/api/mapping.yaml` (with `model-type: record`, `bean-validation: jakarta`). Running `./gradlew processSpring` (or `./gradlew build`) produces Spring controller interfaces and Java record DTOs under `build/openapi/java`, which are automatically on the compile classpath.
 
 ---
 

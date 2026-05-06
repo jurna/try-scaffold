@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   getJavaVersion, resolveBootVersion,
-  downloadAndExtractProject, parseArgs, applyDotfiles, applyOpenApiGenerator,
+  downloadAndExtractProject, parseArgs, applyDotfiles, applyOpenApiProcessor,
 } from './lib/versions.mjs';
 
 function usage() {
@@ -71,7 +71,7 @@ try {
   });
   applyDotfiles(projectName, { frontend: false, packageName });
   const specPath = resolveOpenApiSpec(flags.openapiSpec);
-  if (specPath) applyOpenApiGenerator(projectName, specPath, groupId);
+  if (specPath) applyOpenApiProcessor(projectName, specPath, groupId);
 } catch (err) {
   console.error(`✗ Failed to create project: ${err?.message || String(err)}`);
   process.exit(1);
