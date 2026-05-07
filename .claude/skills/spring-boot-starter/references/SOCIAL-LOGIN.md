@@ -30,6 +30,9 @@ When `security` is in the resolved `--deps` list passed to `create-basic-project
 | `src/main/resources/application-dev.yaml` | Microsoft client registration. Uses `issuer-uri: https://login.microsoftonline.com/${MS_TENANT_ID}/v2.0` so OIDC discovery handles all endpoints. |
 | `src/main/java/<package>/config/SecurityConfig.java` | `SecurityFilterChain` bean: `permitAll` on `/error` and `/actuator/health`, everything else requires login, `oauth2Login()` redirects to `/me` on success. |
 | `src/main/java/<package>/web/HomeController.java` | `@GetMapping("/me")` — returns `{name, email, subject}` from the `OidcUser` principal. |
+| `src/test/resources/application.yaml` | Dummy OAuth2 client registration (no `issuer-uri`, points at `example.invalid`) so `OAuth2ClientAutoConfiguration` wires up during tests without contacting any IdP. |
+| `src/test/java/<package>/MvcIntegrationTest.java` | Meta-annotation bundling `@SpringBootTest`, `@AutoConfigureMockMvc`, and `@Import(TestcontainersConfiguration.class)`. Lives in the root test package so it can `@Import` the package-private `TestcontainersConfiguration`. |
+| `src/test/java/<package>/web/HomeControllerTests.java` | Three MockMvc tests: public `/actuator/health`, unauth `/me` redirects, authenticated `/me` via `oidcLogin()` — demonstrates the canonical spring-security-test pattern. |
 
 `<package>` follows the project's `PACKAGE_NAME` (e.g. `com.example.app` → `com/example/app/`).
 
@@ -73,6 +76,31 @@ set -a && source .env && set +a
 
 ---
 
+## Testing
+
+Tests do **not** activate the `dev` profile, so they cannot use `application-dev.yaml`. Instead, `src/test/resources/application.yaml` provides a dummy `test-microsoft` registration that satisfies `OAuth2ClientAutoConfiguration` without contacting any IdP — the URIs point at `example.invalid` and are never called because `oidcLogin()` injects a synthetic `OidcUser` directly into the `SecurityContext`.
+
+Mirror the controller's package when adding new tests; reuse the generated `@MvcIntegrationTest` meta-annotation:
+
+```java
+@MvcIntegrationTest
+class MyControllerTests {
+
+    @Autowired MockMvc mockMvc;
+
+    @Test
+    void protectedEndpoint() throws Exception {
+        mockMvc.perform(get("/some-path").with(oidcLogin().idToken(t -> t
+                .subject("sub-1").claim("name", "Test").claim("email", "t@x"))))
+            .andExpect(status().isOk());
+    }
+}
+```
+
+`@MvcIntegrationTest` handles `@SpringBootTest` + `@AutoConfigureMockMvc` + Testcontainers wiring. Use `oidcLogin()` from `org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors` for authenticated requests — it bypasses the OAuth2 flow entirely.
+
+---
+
 ## Why single-tenant
 
 Pinning `MS_TENANT_ID` in the `issuer-uri` means Microsoft itself rejects users from other tenants (or personal accounts) before they ever reach the app — the user sees `AADSTS50020` ("user does not exist in tenant"). No allow-list code in Spring is needed; if you ever need to expand to other tenants, switch the issuer to `/common/v2.0` and add explicit tenant validation in an `OidcUserService`.
@@ -103,4 +131,6 @@ Resulting project has no `SecurityConfig`, no `HomeController`, and no `applicat
 | 6 | Authenticated `/me` | Sign in with an org account → `/me` returns `{"name":..., "email":..., "subject":...}` |
 | 7 | Public endpoints | `curl http://localhost:8080/actuator/health` returns `200` while signed out |
 
-> If startup fails with `NoSuchBeanDefinitionException: ClientRegistrationRepository`, you forgot `SPRING_PROFILES_ACTIVE=dev`.
+> If startup fails with `NoSuchBeanDefinitionException: ClientRegistrationRepository`:
+> - Running the app: you forgot `SPRING_PROFILES_ACTIVE=dev`.
+> - Running tests: `src/test/resources/application.yaml` is missing or malformed.

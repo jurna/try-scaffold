@@ -406,15 +406,108 @@ public class HomeController {
 `;
 }
 
+const APPLICATION_TEST_YAML = `spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          test-microsoft:
+            provider: test-microsoft
+            client-id: test-client-id
+            client-secret: test-client-secret
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          test-microsoft:
+            authorization-uri: https://example.invalid/authorize
+            token-uri: https://example.invalid/token
+            user-info-uri: https://example.invalid/userinfo
+            jwk-set-uri: https://example.invalid/jwks
+            user-name-attribute: sub
+`;
+
+function mvcIntegrationTestAnnotationSource(packageName) {
+  return `package ${packageName};
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
+public @interface MvcIntegrationTest {
+}
+`;
+}
+
+function homeControllerTestsSource(packageName) {
+  return `package ${packageName}.web;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import ${packageName}.MvcIntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.MockMvc;
+
+@MvcIntegrationTest
+class HomeControllerTests {
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @Test
+    void healthIsPublic() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void unauthenticatedMeRedirectsToOAuth2Login() throws Exception {
+        mockMvc.perform(get("/me"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrlPattern("/oauth2/authorization/*"));
+    }
+
+    @Test
+    void meReturnsClaimsForOidcUser() throws Exception {
+        mockMvc.perform(get("/me").with(oidcLogin().idToken(token -> token
+                .subject("sub-123")
+                .claim("name", "Jane Doe")
+                .claim("email", "jane@example.com"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Jane Doe"))
+            .andExpect(jsonPath("$.email").value("jane@example.com"))
+            .andExpect(jsonPath("$.subject").value("sub-123"));
+    }
+}
+`;
+}
+
 /**
  * Apply Microsoft single-tenant OAuth2 social login wiring to a freshly extracted project.
- * Writes SecurityConfig.java, HomeController.java, and application-dev.yaml.
+ * Writes SecurityConfig.java, HomeController.java, application-dev.yaml, and a test scaffold
+ * (src/test/resources/application.yaml, MvcIntegrationTest meta-annotation, HomeControllerTests).
  * Idempotent — skips files that already exist. Only call when `security` is in --deps.
  */
 export function applySocialLogin(projectDir, packageName) {
   console.log('  🔐 Generating Microsoft OAuth2 login config…');
   const packagePath = packageName.replace(/\./g, '/');
   const javaRoot = join(projectDir, 'src', 'main', 'java', packagePath);
+  const javaTestRoot = join(projectDir, 'src', 'test', 'java', packagePath);
 
   writeTextFileIfMissing(
     join(projectDir, 'src', 'main', 'resources', 'application-dev.yaml'),
@@ -427,6 +520,18 @@ export function applySocialLogin(projectDir, packageName) {
   writeTextFileIfMissing(
     join(javaRoot, 'web', 'HomeController.java'),
     homeControllerSource(packageName)
+  );
+  writeTextFileIfMissing(
+    join(projectDir, 'src', 'test', 'resources', 'application.yaml'),
+    APPLICATION_TEST_YAML
+  );
+  writeTextFileIfMissing(
+    join(javaTestRoot, 'MvcIntegrationTest.java'),
+    mvcIntegrationTestAnnotationSource(packageName)
+  );
+  writeTextFileIfMissing(
+    join(javaTestRoot, 'web', 'HomeControllerTests.java'),
+    homeControllerTestsSource(packageName)
   );
 }
 
