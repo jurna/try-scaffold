@@ -333,6 +333,103 @@ options:
   console.log(`  ✅ OpenAPI processor configured (apiPath: ${relSpec}, model-type: record)`);
 }
 
+// =============================================================================
+// Social Login (Microsoft, single-tenant) — auto-generated when `security` is in deps.
+// See references/SOCIAL-LOGIN.md for the manual Entra ID app registration steps.
+// =============================================================================
+
+const APPLICATION_DEV_YAML = `spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          microsoft:
+            provider: microsoft
+            client-id: \${MS_CLIENT_ID}
+            client-secret: \${MS_CLIENT_SECRET}
+            client-name: Microsoft
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          microsoft:
+            issuer-uri: https://login.microsoftonline.com/\${MS_TENANT_ID}/v2.0
+            user-name-attribute: name
+`;
+
+function securityConfigSource(packageName) {
+  return `package ${packageName}.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/error", "/actuator/health").permitAll()
+                .anyRequest().authenticated())
+            .oauth2Login(login -> login.defaultSuccessUrl("/me", true))
+            .logout(logout -> logout.logoutSuccessUrl("/"));
+        return http.build();
+    }
+}
+`;
+}
+
+function homeControllerSource(packageName) {
+  return `package ${packageName}.web;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
+
+@RestController
+public class HomeController {
+
+    @GetMapping("/me")
+    public Map<String, Object> me(@AuthenticationPrincipal OidcUser user) {
+        return Map.of(
+            "name", user.getFullName(),
+            "email", user.getEmail(),
+            "subject", user.getSubject());
+    }
+}
+`;
+}
+
+/**
+ * Apply Microsoft single-tenant OAuth2 social login wiring to a freshly extracted project.
+ * Writes SecurityConfig.java, HomeController.java, and application-dev.yaml.
+ * Idempotent — skips files that already exist. Only call when `security` is in --deps.
+ */
+export function applySocialLogin(projectDir, packageName) {
+  console.log('  🔐 Generating Microsoft OAuth2 login config…');
+  const packagePath = packageName.replace(/\./g, '/');
+  const javaRoot = join(projectDir, 'src', 'main', 'java', packagePath);
+
+  writeTextFileIfMissing(
+    join(projectDir, 'src', 'main', 'resources', 'application-dev.yaml'),
+    APPLICATION_DEV_YAML
+  );
+  writeTextFileIfMissing(
+    join(javaRoot, 'config', 'SecurityConfig.java'),
+    securityConfigSource(packageName)
+  );
+  writeTextFileIfMissing(
+    join(javaRoot, 'web', 'HomeController.java'),
+    homeControllerSource(packageName)
+  );
+}
+
 /**
  * Parse CLI arguments into an object with flags and positional args.
  */

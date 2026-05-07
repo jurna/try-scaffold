@@ -44,19 +44,6 @@ servers:
     description: Production
 ```
 
-**`security`** at root level + matching `securitySchemes` in `components`:
-```yaml
-security:
-  - bearerAuth: []
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-```
-
 **`tags[].description`** — every tag must have a description:
 ```yaml
 tags:
@@ -217,5 +204,5 @@ Advisory:
 - ID fields have `format: int64` or `format: uuid`
 - Paginated endpoints return `PageMetadata`-compatible shape
 - `readOnly`/`writeOnly` set where appropriate
-- Security scheme defined; public endpoints set `security: []`
+- Security is optional — declare a scheme only if API consumers need to authenticate against this contract directly. Browser-redirect / session-based auth is usually a deployment concern documented elsewhere, not in the spec
 - Request and response schemas are separate types

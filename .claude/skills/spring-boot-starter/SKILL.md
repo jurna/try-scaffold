@@ -25,6 +25,12 @@ Read [CREATE-BASIC-PROJECT.md](references/CREATE-BASIC-PROJECT.md) for full CLI 
 
 If an `openapi.yaml` is found at `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory, the bootstrap script automatically adds the `io.openapiprocessor.openapi-processor` Gradle plugin to `build.gradle` and writes `src/api/mapping.yaml`. The `processSpring` task generates Spring controller interfaces and Java record DTOs into `build/openapi/java`. The spec is referenced in-place — it is not copied into the generated project. Pass `--openapi-spec <path>` to provide an explicit path.
 
+## Social Login (Microsoft, single-tenant)
+
+When `security` is in the `--deps` list (it is by default), the bootstrap script also generates `SecurityConfig.java`, a `HomeController` exposing a protected `/me` endpoint, and `application-dev.yaml` wiring up Microsoft single-tenant OAuth2 login. Read [SOCIAL-LOGIN.md](references/SOCIAL-LOGIN.md) for Entra ID setup and verification.
+
+If you do not want social login, pass `--deps` without `security` — the script skips these files entirely.
+
 ## Best Practices
 
 When creating Spring Boot projects:
@@ -51,3 +57,4 @@ When creating Spring Boot projects:
 - [Project Setup & Dotfiles](references/PROJECT-SETUP.md) - `.gitignore`, `.env.sample`, `.editorconfig`, `.gitattributes`, `.devcontainer/`
 - [Spring Boot 4 Migration Guide](references/SPRING-BOOT-4.md) - Key changes from Spring Boot 3, Jackson 3 annotations
 - [create-basic-project.mjs Reference](references/CREATE-BASIC-PROJECT.md) - CLI args, defaults, generated structure, dotfiles applied
+- [Social Login (Microsoft, single-tenant)](references/SOCIAL-LOGIN.md) - Auto-generated when `security` is in deps; Entra ID setup steps

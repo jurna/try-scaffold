@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import {
   getJavaVersion, resolveBootVersion,
   downloadAndExtractProject, parseArgs, applyDotfiles, applyOpenApiProcessor,
+  applySocialLogin,
 } from './lib/versions.mjs';
 
 function usage() {
@@ -72,6 +73,10 @@ try {
   applyDotfiles(projectName, { frontend: false, packageName });
   const specPath = resolveOpenApiSpec(flags.openapiSpec);
   if (specPath) applyOpenApiProcessor(projectName, specPath, groupId);
+  const depList = dependencies.split(',').map(s => s.trim()).filter(Boolean);
+  if (depList.includes('security')) {
+    applySocialLogin(projectName, packageName);
+  }
 } catch (err) {
   console.error(`✗ Failed to create project: ${err?.message || String(err)}`);
   process.exit(1);
