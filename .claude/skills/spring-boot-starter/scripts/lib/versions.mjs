@@ -270,6 +270,16 @@ export function applyDotfiles(projectDir, options = {}) {
 }
 
 /**
+ * Generate a docker-compose.yml with a MongoDB service for local development.
+ * Skipped when the project already has one (idempotent).
+ * @param {string} projectDir
+ */
+export function applyMongoCompose(projectDir) {
+  copyAssetIfMissing('docker-compose.yml', join(projectDir, 'docker-compose.yml'));
+  console.log('  🐳 docker-compose.yml generated (mongo:8 on port 27017)');
+}
+
+/**
  * Patch build.gradle to add the io.openapiprocessor.openapi-processor plugin and configure it
  * to generate Spring controller interfaces and Java record DTOs from an existing OpenAPI spec
  * (referenced in-place). Also writes src/api/mapping.yaml with the processor options.

@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import {
   getJavaVersion, resolveBootVersion,
   downloadAndExtractProject, parseArgs, applyDotfiles, applyOpenApiProcessor,
-  applySocialLogin,
+  applySocialLogin, applyMongoCompose,
 } from './lib/versions.mjs';
 
 function usage() {
@@ -74,6 +74,9 @@ try {
   const specPath = resolveOpenApiSpec(flags.openapiSpec);
   if (specPath) applyOpenApiProcessor(projectName, specPath, groupId);
   const depList = dependencies.split(',').map(s => s.trim()).filter(Boolean);
+  if (depList.includes('data-mongodb')) {
+    applyMongoCompose(projectName);
+  }
   if (depList.includes('security')) {
     applySocialLogin(projectName, packageName);
   }

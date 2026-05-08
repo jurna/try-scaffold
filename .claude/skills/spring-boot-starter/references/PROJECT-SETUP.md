@@ -74,7 +74,7 @@ A [Dev Container](https://containers.dev/) gives every contributor the same pre-
 
 ### Customising the DevContainer
 
-- **Add a database?** Switch to a `dockerComposeFile` approach, add a database service, and forward the relevant port in `forwardPorts`.
+- **Add a database?** Switch to a `dockerComposeFile` approach, add a database service, and forward the relevant port in `forwardPorts`. When `data-mongodb` is in `--deps`, the script already drops a starter `docker-compose.yml` at the project root with a `mongo:8` service — extend that file rather than starting from scratch.
 - **Add Redis, Kafka, etc.?** Same — use Docker Compose alongside the `app` service.
 - **GitHub Codespaces**: works out of the box — push `.devcontainer/` and open the repo in Codespaces.
 

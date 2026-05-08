@@ -72,6 +72,8 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 
 > When `security` is included, the script also generates social-login wiring (`SecurityConfig.java`, `HomeController.java`, `application-dev.yaml`) — see [SOCIAL-LOGIN.md](SOCIAL-LOGIN.md).
 
+> When `data-mongodb` is included, the script also generates a `docker-compose.yml` with a `mongo:8` service on port 27017, matching the URI in `.env.sample`. Start it with `docker compose up -d`.
+
 ---
 
 ## Generated project
