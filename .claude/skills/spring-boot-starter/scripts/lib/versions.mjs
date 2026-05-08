@@ -52,6 +52,7 @@ export function getSpringFrameworkVersion() { return getVersionValue('springFram
 export function getHibernateVersion() { return getVersionValue('hibernateVersion', '7.1'); }
 export function getOpenApiProcessorPluginVersion() { return getVersionValue('openApiProcessorPluginVersion', '2026.1'); }
 export function getOpenApiProcessorSpringVersion() { return getVersionValue('openApiProcessorSpringVersion', '2026.3.1'); }
+export function getSpotlessPluginVersion() { return getVersionValue('spotlessPluginVersion', '8.4.0'); }
 
 /**
  * Strip legacy qualifiers (.RELEASE, .GA) that Spring Boot 4+ no longer uses.

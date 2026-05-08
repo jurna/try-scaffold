@@ -9,6 +9,7 @@ import {
   getNodeVersion,
   getOpenApiProcessorPluginVersion,
   getOpenApiProcessorSpringVersion,
+  getSpotlessPluginVersion,
 } from './versions.mjs';
 import {
   APPLICATION_DEV_YAML,
@@ -19,6 +20,7 @@ import {
   homeControllerTestsSource,
   openApiMappingYaml,
   openApiProcessorGradleBlock,
+  spotlessGradleBlock,
 } from './templates.mjs';
 
 const DOTFILES_MARKER = '# === spring-boot-starter additions ===';
@@ -95,6 +97,35 @@ export function applyDotfiles(projectDir, options = {}) {
 export function applyMongoCompose(projectDir) {
   copyAssetIfMissing('docker-compose.yml', join(projectDir, 'docker-compose.yml'));
   console.log('  🐳 docker-compose.yml generated (mongo:8 on port 27017)');
+}
+
+/**
+ * Patch build.gradle to add the com.diffplug.spotless plugin with palantir-java-format,
+ * import ordering, unused-import removal, annotation formatting, and a wildcard-import ban.
+ * Wires `compileJava` to depend on `spotlessApply` so every build auto-formats.
+ *
+ * Always applied — there is no opt-out. Idempotent: skips re-patching if the plugin
+ * is already declared.
+ */
+export function applySpotless(projectDir) {
+  const buildGradlePath = join(projectDir, 'build.gradle');
+  if (!existsSync(buildGradlePath)) return;
+
+  let content = readFileSync(buildGradlePath, 'utf8');
+  if (content.includes('com.diffplug.spotless')) return;
+
+  const { pluginLine, appended } = spotlessGradleBlock({
+    pluginVersion: getSpotlessPluginVersion(),
+  });
+
+  content = content.replace(
+    /(plugins \{[\s\S]*?)(\n\})/,
+    `$1${pluginLine}$2`
+  );
+  content += appended;
+  writeFileSync(buildGradlePath, content, 'utf8');
+
+  console.log('  ✨ Spotless configured (palantir-java-format, ratchetFrom origin/master, auto-apply on build)');
 }
 
 /**

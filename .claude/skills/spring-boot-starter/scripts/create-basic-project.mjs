@@ -9,7 +9,7 @@ import {
 } from './lib/versions.mjs';
 import {
   applyDotfiles, applyOpenApiProcessor,
-  applySocialLogin, applyMongoCompose,
+  applySocialLogin, applyMongoCompose, applySpotless,
 } from './lib/project-files.mjs';
 
 function usage() {
@@ -74,6 +74,7 @@ try {
     configurationFileFormat: 'yaml',
   });
   applyDotfiles(projectName, { frontend: false, packageName });
+  applySpotless(projectName);
   const specPath = resolveOpenApiSpec(flags.openapiSpec);
   if (specPath) applyOpenApiProcessor(projectName, specPath, groupId);
   const depList = dependencies.split(',').map(s => s.trim()).filter(Boolean);

@@ -54,12 +54,12 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error", "/actuator/health").permitAll()
-                .anyRequest().authenticated())
-            .oauth2Login(login -> login.defaultSuccessUrl("/me", true))
-            .logout(logout -> logout.logoutSuccessUrl("/"));
+        http.authorizeHttpRequests(auth -> auth.requestMatchers("/error", "/actuator/health")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .oauth2Login(login -> login.defaultSuccessUrl("/me", true))
+                .logout(logout -> logout.logoutSuccessUrl("/"));
         return http.build();
     }
 }
@@ -69,12 +69,12 @@ public class SecurityConfig {
 export function homeControllerSource(packageName) {
   return `package ${packageName}.web;
 
+import java.util.Map;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 public class HomeController {
@@ -82,9 +82,9 @@ public class HomeController {
     @GetMapping("/me")
     public Map<String, Object> me(@AuthenticationPrincipal OidcUser user) {
         return Map.of(
-            "name", user.getFullName(),
-            "email", user.getEmail(),
-            "subject", user.getSubject());
+                "name", user.getFullName(),
+                "email", user.getEmail(),
+                "subject", user.getSubject());
     }
 }
 `;
@@ -107,8 +107,7 @@ import org.springframework.context.annotation.Import;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
-public @interface MvcIntegrationTest {
-}
+public @interface MvcIntegrationTest {}
 `;
 }
 
@@ -121,10 +120,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import ${packageName}.MvcIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
+
+import ${packageName}.MvcIntegrationTest;
 
 @MvcIntegrationTest
 class HomeControllerTests {
@@ -134,27 +134,25 @@ class HomeControllerTests {
 
     @Test
     void healthIsPublic() throws Exception {
-        mockMvc.perform(get("/actuator/health"))
-            .andExpect(status().isOk());
+        mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
     }
 
     @Test
     void unauthenticatedMeRedirectsToOAuth2Login() throws Exception {
         mockMvc.perform(get("/me"))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrlPattern("/oauth2/authorization/*"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/oauth2/authorization/*"));
     }
 
     @Test
     void meReturnsClaimsForOidcUser() throws Exception {
-        mockMvc.perform(get("/me").with(oidcLogin().idToken(token -> token
-                .subject("sub-123")
-                .claim("name", "Jane Doe")
-                .claim("email", "jane@example.com"))))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name").value("Jane Doe"))
-            .andExpect(jsonPath("$.email").value("jane@example.com"))
-            .andExpect(jsonPath("$.subject").value("sub-123"));
+        mockMvc.perform(get("/me").with(oidcLogin().idToken(token -> token.subject("sub-123")
+                        .claim("name", "Jane Doe")
+                        .claim("email", "jane@example.com"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Jane Doe"))
+                .andExpect(jsonPath("$.email").value("jane@example.com"))
+                .andExpect(jsonPath("$.subject").value("sub-123"));
     }
 }
 `;
@@ -170,6 +168,33 @@ options:
   generated-date: false
   format-code: false
 `;
+}
+
+export function spotlessGradleBlock({ pluginVersion }) {
+  return {
+    pluginLine: `\n    id 'com.diffplug.spotless' version '${pluginVersion}'`,
+    appended: `
+spotless {
+    ratchetFrom 'origin/master'
+
+    java {
+        target 'src/*/java/**/*.java'
+        toggleOffOn()
+
+        // Use Spotless's bundled palantir-java-format default — pinning older
+        // versions breaks on JDK 25 due to javac internal API changes.
+        palantirJavaFormat().formatJavadoc(true)
+
+        importOrder 'java', 'javax', 'org', 'com', ''
+        removeUnusedImports()
+        formatAnnotations()
+        forbidWildcardImports()
+    }
+}
+
+compileJava.dependsOn tasks.named('spotlessApply')
+`,
+  };
 }
 
 export function openApiProcessorGradleBlock({ pluginVersion, springVersion, relSpec }) {

@@ -74,6 +74,8 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 
 > When `data-mongodb` is included, the script also generates a `docker-compose.yml` with a `mongo:8` service on port 27017, matching the URI in `.env.sample`. Start it with `docker compose up -d`.
 
+> **Spotless is always applied** (no opt-out). The script patches `build.gradle` with the `com.diffplug.spotless` plugin (palantir-java-format, importOrder, removeUnusedImports, formatAnnotations, forbidWildcardImports, toggleOffOn, ratchetFrom `origin/master`) and wires `compileJava.dependsOn spotlessApply` so every build auto-formats the working tree.
+
 ---
 
 ## Generated project

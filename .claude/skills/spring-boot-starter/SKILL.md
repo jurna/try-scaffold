@@ -21,6 +21,10 @@ Centralized versions live in `versions.json`. Scripts read from it via `scripts/
 
 Read [CREATE-BASIC-PROJECT.md](references/CREATE-BASIC-PROJECT.md) for full CLI usage, arguments, flags, default dependencies, and generated project structure.
 
+## Code Formatting (Spotless)
+
+Every generated project includes the [Spotless](https://github.com/diffplug/spotless) Gradle plugin (`com.diffplug.spotless`) configured with `palantir-java-format`, `importOrder`, `removeUnusedImports`, `formatAnnotations`, `forbidWildcardImports`, `toggleOffOn`, and `ratchetFrom 'origin/master'`. `compileJava` depends on `spotlessApply`, so `./gradlew build` auto-formats the working tree before compiling. **This is unconditional — there is no opt-out flag.** The plugin version is pinned via `versions.json` (`spotlessPluginVersion`); the `palantir-java-format` version is intentionally **not** pinned because older releases break on JDK 25.
+
 ## OpenAPI Contract Generation
 
 If an `openapi.yaml` is found at `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory, the bootstrap script automatically adds the `io.openapiprocessor.openapi-processor` Gradle plugin to `build.gradle` and writes `src/api/mapping.yaml`. The `processSpring` task generates Spring controller interfaces and Java record DTOs into `build/openapi/java`. The spec is referenced in-place — it is not copied into the generated project. Pass `--openapi-spec <path>` to provide an explicit path.
