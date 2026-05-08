@@ -76,6 +76,8 @@ Fetch Web URL `https://start.spring.io/metadata/client` to browse all available 
 
 > **Spotless is always applied** (no opt-out). The script patches `build.gradle` with the `com.diffplug.spotless` plugin (palantir-java-format, importOrder, removeUnusedImports, formatAnnotations, forbidWildcardImports, toggleOffOn, ratchetFrom `origin/master`) and wires `compileJava.dependsOn spotlessApply` so every build auto-formats the working tree.
 
+> **ArchUnit is always applied** (no opt-out). The script adds `com.tngtech.archunit:archunit-junit5` and `de.rweisleder:archunit-spring` as `testImplementation` deps and writes an `ArchitectureTest.java` under `src/test/java/<package>/`. It enforces feature-based package layout, Spring stereotype placement, no field injection, no `System.out`, no `java.util.logging`, and a few predefined Spring rules. When `security` is in `--deps`, the social-login `HomeController` is generated under `<package>.home.controller` so the rules pass on a freshly bootstrapped project.
+
 ---
 
 ## Generated project

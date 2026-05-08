@@ -67,7 +67,7 @@ public class SecurityConfig {
 }
 
 export function homeControllerSource(packageName) {
-  return `package ${packageName}.web;
+  return `package ${packageName}.home.controller;
 
 import java.util.Map;
 
@@ -112,7 +112,7 @@ public @interface MvcIntegrationTest {}
 }
 
 export function homeControllerTestsSource(packageName) {
-  return `package ${packageName}.web;
+  return `package ${packageName}.home.controller;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -154,6 +154,136 @@ class HomeControllerTests {
                 .andExpect(jsonPath("$.email").value("jane@example.com"))
                 .andExpect(jsonPath("$.subject").value("sub-123"));
     }
+}
+`;
+}
+
+export function archUnitDependenciesBlock({ archUnitVersion, archUnitSpringVersion }) {
+  return `	testImplementation 'com.tngtech.archunit:archunit-junit5:${archUnitVersion}'
+	testImplementation 'de.rweisleder:archunit-spring:${archUnitSpringVersion}'
+`;
+}
+
+export function architectureTestSource(packageName) {
+  return `package ${packageName};
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS;
+import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS;
+import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
+import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_JODATIME;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
+
+import de.rweisleder.archunit.spring.framework.SpringControllerRules;
+
+@AnalyzeClasses(
+        packages = "${packageName}",
+        importOptions = {ImportOption.DoNotIncludeTests.class, ImportOption.DoNotIncludeJars.class})
+class ArchitectureTest {
+
+    // --- Feature-based package boundaries ---
+
+    @ArchTest
+    static final ArchRule no_cycles_between_feature_packages = SlicesRuleDefinition.slices()
+            .matching("${packageName}.(*)..")
+            .should()
+            .beFreeOfCycles();
+
+    @ArchTest
+    static final ArchRule controllers_should_not_depend_on_spring_data = noClasses()
+            .that()
+            .areAnnotatedWith(RestController.class)
+            .or()
+            .areAnnotatedWith(Controller.class)
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("org.springframework.data..")
+            .because("controllers must go through a service, never reach the data layer directly");
+
+    // --- Spring stereotype conventions ---
+
+    @ArchTest
+    static final ArchRule rest_controllers_live_in_controller_package = classes()
+            .that()
+            .areAnnotatedWith(RestController.class)
+            .or()
+            .areAnnotatedWith(Controller.class)
+            .should()
+            .resideInAPackage("..controller..")
+            .andShould()
+            .haveSimpleNameEndingWith("Controller");
+
+    @ArchTest
+    static final ArchRule services_live_in_service_package = classes()
+            .that()
+            .areAnnotatedWith(Service.class)
+            .should()
+            .resideInAPackage("..service..")
+            .andShould()
+            .haveSimpleNameEndingWith("Service")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule repositories_live_in_repository_package = classes()
+            .that()
+            .haveSimpleNameEndingWith("Repository")
+            .should()
+            .resideInAPackage("..repository..")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule repository_package_only_holds_repositories = classes()
+            .that()
+            .resideInAPackage("..repository..")
+            .should()
+            .haveSimpleNameEndingWith("Repository")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule configurations_live_in_config_package =
+            classes().that().areAnnotatedWith(Configuration.class).should().resideInAPackage("..config..");
+
+    // --- Coding-practice guards ---
+
+    @ArchTest
+    static final ArchRule fields_should_not_use_autowired = fields().should()
+            .notBeAnnotatedWith("org.springframework.beans.factory.annotation.Autowired")
+            .andShould()
+            .notBeAnnotatedWith("jakarta.annotation.Resource")
+            .andShould()
+            .notBeAnnotatedWith("jakarta.inject.Inject")
+            .because("use constructor injection (Lombok @RequiredArgsConstructor) — see CLAUDE.md")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule no_generic_exceptions = NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS;
+
+    @ArchTest
+    static final ArchRule no_java_util_logging = NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
+
+    @ArchTest
+    static final ArchRule no_jodatime = NO_CLASSES_SHOULD_USE_JODATIME;
+
+    @ArchTest
+    static final ArchRule no_standard_streams = NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS;
+
+    // --- Predefined Spring rules (rweisleder/archunit-spring) ---
+
+    @ArchTest
+    static final ArchRule controller_must_have_request_mapping =
+            SpringControllerRules.ControllerNameWithoutRequestMapping;
 }
 `;
 }

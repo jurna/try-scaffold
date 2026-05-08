@@ -20,5 +20,7 @@
   "hibernateVersion": "7.1",
   "openApiProcessorPluginVersion": "2026.1",
   "openApiProcessorSpringVersion": "2026.3.1",
-  "spotlessPluginVersion": "8.4.0"
+  "spotlessPluginVersion": "8.4.0",
+  "archUnitVersion": "1.4.2",
+  "archUnitSpringVersion": "1.2.0"
 }

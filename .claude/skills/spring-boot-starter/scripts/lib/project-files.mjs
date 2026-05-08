@@ -6,6 +6,8 @@ import { resolve, dirname, join, relative } from 'node:path';
 
 import {
   ASSETS_DIR,
+  getArchUnitSpringVersion,
+  getArchUnitVersion,
   getNodeVersion,
   getOpenApiProcessorPluginVersion,
   getOpenApiProcessorSpringVersion,
@@ -14,6 +16,8 @@ import {
 import {
   APPLICATION_DEV_YAML,
   APPLICATION_TEST_YAML,
+  archUnitDependenciesBlock,
+  architectureTestSource,
   securityConfigSource,
   homeControllerSource,
   mvcIntegrationTestAnnotationSource,
@@ -182,7 +186,7 @@ export function applySocialLogin(projectDir, packageName) {
     securityConfigSource(packageName)
   );
   writeTextFileIfMissing(
-    join(javaRoot, 'web', 'HomeController.java'),
+    join(javaRoot, 'home', 'controller', 'HomeController.java'),
     homeControllerSource(packageName)
   );
   writeTextFileIfMissing(
@@ -194,7 +198,44 @@ export function applySocialLogin(projectDir, packageName) {
     mvcIntegrationTestAnnotationSource(packageName)
   );
   writeTextFileIfMissing(
-    join(javaTestRoot, 'web', 'HomeControllerTests.java'),
+    join(javaTestRoot, 'home', 'controller', 'HomeControllerTests.java'),
     homeControllerTestsSource(packageName)
   );
+}
+
+/**
+ * Add ArchUnit (and rweisleder/archunit-spring) test dependencies to build.gradle and write
+ * an ArchitectureTest under src/test/java/<package>/ArchitectureTest.java that enforces the
+ * conventions documented in CLAUDE.md (feature-based packages, Spring stereotype placement,
+ * no field injection, no System.out, etc.).
+ *
+ * Always applied — there is no opt-out. Idempotent: skips re-patching if the deps are
+ * already declared and skips overwriting an existing ArchitectureTest.
+ */
+export function applyArchUnit(projectDir, packageName) {
+  const buildGradlePath = join(projectDir, 'build.gradle');
+  if (!existsSync(buildGradlePath)) return;
+
+  let content = readFileSync(buildGradlePath, 'utf8');
+  if (!content.includes('com.tngtech.archunit:archunit-junit5')) {
+    const depsBlock = archUnitDependenciesBlock({
+      archUnitVersion: getArchUnitVersion(),
+      archUnitSpringVersion: getArchUnitSpringVersion(),
+    });
+    // Insert before the closing brace of the dependencies { ... } block
+    content = content.replace(
+      /(dependencies \{[\s\S]*?)(\n\})/,
+      `$1\n${depsBlock}$2`
+    );
+    writeFileSync(buildGradlePath, content, 'utf8');
+  }
+
+  const packagePath = packageName.replace(/\./g, '/');
+  const testRoot = join(projectDir, 'src', 'test', 'java', packagePath);
+  writeTextFileIfMissing(
+    join(testRoot, 'ArchitectureTest.java'),
+    architectureTestSource(packageName)
+  );
+
+  console.log('  🏛  ArchUnit configured (ArchitectureTest enforces feature-package layout, no field injection, etc.)');
 }
