@@ -5,9 +5,12 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   getJavaVersion, resolveBootVersion,
-  downloadAndExtractProject, parseArgs, applyDotfiles, applyOpenApiProcessor,
-  applySocialLogin, applyMongoCompose,
+  downloadAndExtractProject, parseArgs,
 } from './lib/versions.mjs';
+import {
+  applyDotfiles, applyOpenApiProcessor,
+  applySocialLogin, applyMongoCompose,
+} from './lib/project-files.mjs';
 
 function usage() {
   console.log(`Usage: node create-basic-project.mjs [PROJECT_NAME] [GROUP_ID] [ARTIFACT_ID] [PACKAGE_NAME] [JAVA_VERSION]
