@@ -37,7 +37,8 @@ When creating Spring Boot projects:
 
 1. **Review Spring Boot 4 critical considerations**: See [Spring Boot 4 Migration Guide](references/SPRING-BOOT-4.md) for Jackson 3 annotations and TestContainers configuration
 2. Include Spring Boot Actuator for production-ready features
-3. Foundational dotfiles are applied automatically by the bootstrap script (`.gitignore`, `.env.sample`, `.editorconfig`, `.gitattributes`, `.vscode/`, `.devcontainer/`) - see [Project Setup & Dotfiles](references/PROJECT-SETUP.md)
+3. Foundational dotfiles are applied automatically by the bootstrap script (`.gitignore`, `.env.sample`, `.editorconfig`, `.gitattributes`, `.vscode/`, `.devcontainer/`, `CLAUDE.md`) - see [Project Setup & Dotfiles](references/PROJECT-SETUP.md)
+   - `CLAUDE.md` ships a baseline of project conventions: feature-based package structure (each feature owns its `controller`/`service`/`repository`), SOLID, simplest-solution-wins, constructor injection, thin controllers, validation at boundaries.
    - The `.env` file is the canonical location for local secrets; instruct users to copy `.env.sample` → `.env` and fill in real values
    - **NEVER read or expose `.env`**: it contains real secrets — do not `cat`, view, or print its contents; only `.env.sample` (placeholder values) may be read or displayed
 5. Include Spring Boot DevTools for development productivity

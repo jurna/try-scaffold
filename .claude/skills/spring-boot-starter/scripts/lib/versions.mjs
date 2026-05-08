@@ -257,6 +257,8 @@ export function applyDotfiles(projectDir, options = {}) {
   copyAssetIfMissing(join('vscode', 'settings.json'), join(projectDir, '.vscode', 'settings.json'));
   // DevContainer setup
   copyAssetIfMissing(join('devcontainer', 'devcontainer.json'), join(projectDir, '.devcontainer', 'devcontainer.json'));
+  // Coding-conventions guidance for Claude Code
+  copyAssetIfMissing('CLAUDE.md', join(projectDir, 'CLAUDE.md'));
   // Optional Node version pinning if front-end present
   try {
     const nodeVersion = getNodeVersion();

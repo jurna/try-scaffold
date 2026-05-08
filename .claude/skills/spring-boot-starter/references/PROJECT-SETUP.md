@@ -22,6 +22,7 @@
 - **.gitattributes** → normalize line endings, mark binary files, improve diffs
 - **.devcontainer/** (auto-applied) → reproducible Dev Container with Java 25
 - **.vscode/** (auto-applied) → recommended extensions/settings (Java, Spring, YAML)
+- **CLAUDE.md** (auto-applied) → baseline conventions for Claude Code: feature-based packages, SOLID, simplest-solution-wins
 
 ---
 
