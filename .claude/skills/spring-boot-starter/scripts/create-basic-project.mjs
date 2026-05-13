@@ -10,6 +10,7 @@ import {
 import {
   applyArchUnit, applyDotfiles, applyOpenApiProcessor,
   applySocialLogin, applyMongoCompose, applySpotless,
+  applyStaticAnalysis,
 } from './lib/project-files.mjs';
 
 function usage() {
@@ -76,6 +77,7 @@ try {
   applyDotfiles(projectName, { frontend: false, packageName });
   applySpotless(projectName);
   applyArchUnit(projectName, packageName);
+  applyStaticAnalysis(projectName, packageName, groupId);
   const specPath = resolveOpenApiSpec(flags.openapiSpec);
   if (specPath) applyOpenApiProcessor(projectName, specPath, groupId);
   const depList = dependencies.split(',').map(s => s.trim()).filter(Boolean);

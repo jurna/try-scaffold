@@ -327,6 +327,210 @@ compileJava.dependsOn tasks.named('spotlessApply')
   };
 }
 
+export function packageInfoSource(packageName) {
+  return `@NullMarked
+package ${packageName};
+
+import org.jspecify.annotations.NullMarked;
+`;
+}
+
+export const PMD_RULESET_XML = `<?xml version="1.0"?>
+<ruleset name="my-app-complexity"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
+                             https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Complexity-focused PMD ruleset. Style/formatting are owned by Spotless,
+        architecture is owned by ArchUnit, bytecode bugs are owned by SpotBugs, and
+        null-safety / correctness is owned by Error Prone + NullAway. This file only
+        enforces complexity and a handful of high-signal design rules.
+    </description>
+
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="classReportLevel" value="80"/>
+            <property name="methodReportLevel" value="10"/>
+        </properties>
+    </rule>
+    <rule ref="category/java/design.xml/CognitiveComplexity">
+        <properties>
+            <property name="reportLevel" value="15"/>
+        </properties>
+    </rule>
+    <rule ref="category/java/design.xml/NPathComplexity"/>
+
+    <rule ref="category/java/design.xml/GodClass"/>
+    <rule ref="category/java/design.xml/ExcessiveImports"/>
+    <rule ref="category/java/design.xml/ExcessiveParameterList"/>
+    <rule ref="category/java/design.xml/ExcessivePublicCount"/>
+    <rule ref="category/java/design.xml/TooManyMethods"/>
+    <rule ref="category/java/design.xml/TooManyFields"/>
+</ruleset>
+`;
+
+export function spotbugsExcludeXml(groupId) {
+  const escapedGroupId = groupId.replace(/\./g, '\\.');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter xmlns="https://github.com/spotbugs/filter/3.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/master/spotbugs/etc/findbugsfilter.xsd">
+
+    <Match>
+        <Source name="~.*[/\\\\]build[/\\\\]openapi[/\\\\].*"/>
+    </Match>
+
+    <Match>
+        <Class name="~${escapedGroupId}\\.api\\..*"/>
+    </Match>
+
+    <Match>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <Match>
+        <Bug code="THROWS"/>
+        <Class name="~.*\\.config\\..*"/>
+    </Match>
+</FindBugsFilter>
+`;
+}
+
+export function staticAnalysisGradleBlock({
+  pmdPluginVersion,
+  spotbugsGradlePluginVersion,
+  spotbugsToolVersion,
+  findSecBugsVersion,
+  errorProneGradlePluginVersion,
+  errorProneCoreVersion,
+  nullAwayVersion,
+  jSpecifyVersion,
+  jacocoToolVersion,
+  packageName,
+  groupId,
+}) {
+  const groupIdPath = groupId.replace(/\./g, '/');
+  return {
+    pluginLines:
+      `\n    id 'pmd'` +
+      `\n    id 'com.github.spotbugs' version '${spotbugsGradlePluginVersion}'` +
+      `\n    id 'net.ltgt.errorprone' version '${errorProneGradlePluginVersion}'` +
+      `\n    id 'jacoco'`,
+    dependencies:
+      `\timplementation 'org.jspecify:jspecify:${jSpecifyVersion}'\n` +
+      `\terrorprone 'com.google.errorprone:error_prone_core:${errorProneCoreVersion}'\n` +
+      `\terrorprone 'com.uber.nullaway:nullaway:${nullAwayVersion}'\n` +
+      `\tspotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:${findSecBugsVersion}'\n`,
+    appended: `
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.excludedPaths = '.*/build/openapi/.*'
+    options.forkOptions.jvmArgs += [
+        '--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
+        '--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED',
+        '--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
+        '--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED',
+        '--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+        '--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+        '--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED',
+        '--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED',
+    ]
+    options.fork = true
+
+    if (project.hasProperty('disableErrorProne')) {
+        options.errorprone.enabled = false
+    }
+}
+
+tasks.named('compileJava').configure {
+    options.errorprone.option('NullAway:AnnotatedPackages', '${packageName}')
+    options.errorprone.option('NullAway:JSpecifyMode', 'true')
+    options.errorprone.error('NullAway')
+}
+
+tasks.named('compileTestJava').configure {
+    options.errorprone.enabled = false
+}
+
+pmd {
+    toolVersion = '${pmdPluginVersion}'
+    ignoreFailures = false
+    ruleSetFiles = files('config/pmd/pmd-ruleset.xml')
+    ruleSets = []
+}
+
+tasks.named('pmdMain').configure {
+    source = source.filter { !it.path.contains('build/openapi') }
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.named('pmdTest') { enabled = false }
+
+spotbugs {
+    toolVersion = '${spotbugsToolVersion}'
+    effort = 'max'
+    reportLevel = 'low'
+    ignoreFailures = false
+    excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
+tasks.named('spotbugsMain').configure {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.named('spotbugsTest') { enabled = false }
+
+jacoco {
+    toolVersion = '${jacocoToolVersion}'
+}
+
+def coverageExclusions = ['${groupIdPath}/api/**']
+
+tasks.named('jacocoTestReport').configure {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    classDirectories.setFrom(
+        files(classDirectories.files.collect { dir ->
+            fileTree(dir: dir, exclude: coverageExclusions)
+        })
+    )
+}
+
+tasks.named('jacocoTestCoverageVerification').configure {
+    dependsOn tasks.named('jacocoTestReport')
+    classDirectories.setFrom(
+        files(classDirectories.files.collect { dir ->
+            fileTree(dir: dir, exclude: coverageExclusions)
+        })
+    )
+    violationRules {
+        rule {
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 1.0
+            }
+        }
+    }
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}
+`,
+  };
+}
+
 export function openApiProcessorGradleBlock({ pluginVersion, springVersion, relSpec }) {
   return {
     pluginLine: `\n    id 'io.openapiprocessor.openapi-processor' version '${pluginVersion}'`,

@@ -8,9 +8,18 @@ import {
   ASSETS_DIR,
   getArchUnitSpringVersion,
   getArchUnitVersion,
+  getErrorProneCoreVersion,
+  getErrorProneGradlePluginVersion,
+  getFindSecBugsVersion,
+  getJacocoToolVersion,
+  getJSpecifyVersion,
   getNodeVersion,
+  getNullAwayVersion,
   getOpenApiProcessorPluginVersion,
   getOpenApiProcessorSpringVersion,
+  getPmdPluginVersion,
+  getSpotbugsGradlePluginVersion,
+  getSpotbugsToolVersion,
   getSpotlessPluginVersion,
 } from './versions.mjs';
 import {
@@ -24,7 +33,11 @@ import {
   homeControllerTestsSource,
   openApiMappingYaml,
   openApiProcessorGradleBlock,
+  packageInfoSource,
+  PMD_RULESET_XML,
+  spotbugsExcludeXml,
   spotlessGradleBlock,
+  staticAnalysisGradleBlock,
 } from './templates.mjs';
 
 const DOTFILES_MARKER = '# === spring-boot-starter additions ===';
@@ -238,4 +251,57 @@ export function applyArchUnit(projectDir, packageName) {
   );
 
   console.log('  🏛  ArchUnit configured (ArchitectureTest enforces feature-package layout, no field injection, etc.)');
+}
+
+/**
+ * Patch build.gradle with the full local static-analysis stack (PMD, SpotBugs + FindSecBugs,
+ * Error Prone + NullAway in JSpecify mode, JaCoCo with a 100% branch-coverage gate). Also
+ * writes config/pmd/pmd-ruleset.xml, config/spotbugs/exclude.xml, and a `@NullMarked`
+ * package-info.java for the root package.
+ *
+ * Always applied — there is no opt-out. Idempotent: skips re-patching if the SpotBugs plugin
+ * is already declared. Skips overwriting existing config files.
+ */
+export function applyStaticAnalysis(projectDir, packageName, groupId) {
+  const buildGradlePath = join(projectDir, 'build.gradle');
+  if (!existsSync(buildGradlePath)) return;
+
+  let content = readFileSync(buildGradlePath, 'utf8');
+  if (content.includes('com.github.spotbugs')) return;
+
+  const { pluginLines, dependencies, appended } = staticAnalysisGradleBlock({
+    pmdPluginVersion: getPmdPluginVersion(),
+    spotbugsGradlePluginVersion: getSpotbugsGradlePluginVersion(),
+    spotbugsToolVersion: getSpotbugsToolVersion(),
+    findSecBugsVersion: getFindSecBugsVersion(),
+    errorProneGradlePluginVersion: getErrorProneGradlePluginVersion(),
+    errorProneCoreVersion: getErrorProneCoreVersion(),
+    nullAwayVersion: getNullAwayVersion(),
+    jSpecifyVersion: getJSpecifyVersion(),
+    jacocoToolVersion: getJacocoToolVersion(),
+    packageName,
+    groupId,
+  });
+
+  content = content.replace(/(plugins \{[\s\S]*?)(\n\})/, `$1${pluginLines}$2`);
+  content = content.replace(/(dependencies \{[\s\S]*?)(\n\})/, `$1\n${dependencies}$2`);
+  content += appended;
+  writeFileSync(buildGradlePath, content, 'utf8');
+
+  writeTextFileIfMissing(
+    join(projectDir, 'config', 'pmd', 'pmd-ruleset.xml'),
+    PMD_RULESET_XML
+  );
+  writeTextFileIfMissing(
+    join(projectDir, 'config', 'spotbugs', 'exclude.xml'),
+    spotbugsExcludeXml(groupId)
+  );
+
+  const packagePath = packageName.replace(/\./g, '/');
+  writeTextFileIfMissing(
+    join(projectDir, 'src', 'main', 'java', packagePath, 'package-info.java'),
+    packageInfoSource(packageName)
+  );
+
+  console.log('  🔍 Static analysis configured (PMD, SpotBugs + FindSecBugs, Error Prone + NullAway/JSpecify, JaCoCo 100% branch — no opt-out)');
 }

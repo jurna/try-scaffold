@@ -22,5 +22,14 @@
   "openApiProcessorSpringVersion": "2026.3.1",
   "spotlessPluginVersion": "8.4.0",
   "archUnitVersion": "1.4.2",
-  "archUnitSpringVersion": "1.2.0"
+  "archUnitSpringVersion": "1.2.0",
+  "pmdPluginVersion": "7.14.0",
+  "spotbugsGradlePluginVersion": "6.5.1",
+  "spotbugsToolVersion": "4.9.8",
+  "findSecBugsVersion": "1.14.0",
+  "errorProneGradlePluginVersion": "5.1.0",
+  "errorProneCoreVersion": "2.41.0",
+  "nullAwayVersion": "0.13.4",
+  "jSpecifyVersion": "1.0.0",
+  "jacocoToolVersion": "0.8.13"
 }

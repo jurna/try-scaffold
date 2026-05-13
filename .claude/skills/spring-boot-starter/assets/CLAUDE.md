@@ -10,7 +10,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew test                        # Run all tests
 ./gradlew test --tests <FQN>          # Run a single test class or method
 ./gradlew bootJar                     # Build runnable jar
+./gradlew check                       # Compile + tests + jacoco gate + spotbugs + pmd
+./gradlew compileJava                 # Error Prone + NullAway (JSpecify mode)
+./gradlew pmdMain                     # Complexity + design rules
+./gradlew spotbugsMain                # Bytecode bugs + FindSecBugs (OWASP)
+./gradlew jacocoTestCoverageVerification   # 100% branch coverage gate
+./gradlew -PdisableErrorProne ...     # Escape hatch: skip Error Prone for a run
 ```
+
+Report locations (machine-readable, parse these to find issues):
+
+- `build/reports/spotbugs/main.xml`
+- `build/reports/pmd/main.xml`
+- `build/reports/jacoco/test/jacocoTestReport.xml`
+- Error Prone / NullAway findings are emitted on `compileJava` stderr.
+
+## Null safety
+
+All packages are `@NullMarked` (see `package-info.java`). Use `org.jspecify.annotations.Nullable`
+when a reference may be null — never `javax.annotation.Nullable`, `org.springframework.lang.Nullable`,
+or any other vendor variant. NullAway runs in JSpecify mode and will fail the build on a
+possibly-null dereference.
 
 ## Project structure
 

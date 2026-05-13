@@ -29,6 +29,10 @@ Every generated project includes the [Spotless](https://github.com/diffplug/spot
 
 Every generated project includes [ArchUnit](https://www.archunit.org/) + [archunit-spring](https://github.com/rweisleder/archunit-spring) and an `ArchitectureTest.java` that runs as part of `./gradlew test`, enforcing the conventions in `CLAUDE.md` (feature-based packages, Spring stereotype placement, no field injection, etc.). **Unconditional — no opt-out.** Versions pinned via `versions.json` (`archUnitVersion`, `archUnitSpringVersion`).
 
+## Static Analysis
+
+Every generated project ships with **Error Prone + NullAway** (JSpecify mode), **PMD**, **SpotBugs + FindSecBugs**, and **JaCoCo** (100% branch coverage gate) wired into `./gradlew check`. **Unconditional — no opt-out.** Versions pinned via `versions.json`.
+
 ## OpenAPI Contract Generation
 
 If an `openapi.yaml` is found at `contracts/openapi.yaml`, `contract/openapi.yaml`, or `openapi.yaml` in the current directory, the bootstrap script automatically adds the `io.openapiprocessor.openapi-processor` Gradle plugin to `build.gradle` and writes `src/api/mapping.yaml`. The `processSpring` task generates Spring controller interfaces and Java record DTOs into `build/openapi/java`. The spec is referenced in-place — it is not copied into the generated project. Pass `--openapi-spec <path>` to provide an explicit path.

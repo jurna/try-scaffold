@@ -55,6 +55,15 @@ export function getOpenApiProcessorSpringVersion() { return getVersionValue('ope
 export function getSpotlessPluginVersion() { return getVersionValue('spotlessPluginVersion', '8.4.0'); }
 export function getArchUnitVersion() { return getVersionValue('archUnitVersion', '1.4.2'); }
 export function getArchUnitSpringVersion() { return getVersionValue('archUnitSpringVersion', '1.2.0'); }
+export function getPmdPluginVersion() { return getVersionValue('pmdPluginVersion', '7.14.0'); }
+export function getSpotbugsGradlePluginVersion() { return getVersionValue('spotbugsGradlePluginVersion', '6.5.1'); }
+export function getSpotbugsToolVersion() { return getVersionValue('spotbugsToolVersion', '4.9.8'); }
+export function getFindSecBugsVersion() { return getVersionValue('findSecBugsVersion', '1.14.0'); }
+export function getErrorProneGradlePluginVersion() { return getVersionValue('errorProneGradlePluginVersion', '5.1.0'); }
+export function getErrorProneCoreVersion() { return getVersionValue('errorProneCoreVersion', '2.41.0'); }
+export function getNullAwayVersion() { return getVersionValue('nullAwayVersion', '0.13.4'); }
+export function getJSpecifyVersion() { return getVersionValue('jSpecifyVersion', '1.0.0'); }
+export function getJacocoToolVersion() { return getVersionValue('jacocoToolVersion', '0.8.13'); }
 
 /**
  * Strip legacy qualifiers (.RELEASE, .GA) that Spring Boot 4+ no longer uses.
